@@ -42,9 +42,34 @@ async function ensureSettings() {
   }
 }
 
+// SKUs de los datos de ejemplo del template original (almacén)
+const OLD_DEMO_SKUS = [
+  'COCA-1500', 'AGUA-500', 'ARROZ-1KG', 'ACEITE-900', 'FIDEOS-500', 'LAVAND-1L', 'DET-750', 'PAPEL-30',
+];
+
+// Reemplazo único de los datos de almacén por los del salón.
+// Se activa con la variable RESET_DEMO_DATA=true y SOLO borra si todos los productos
+// cargados son los de ejemplo del almacén (así nunca toca datos reales del salón).
+async function replaceOldDemo() {
+  if (process.env.RESET_DEMO_DATA !== 'true') return false;
+  const products = await query('SELECT sku FROM products');
+  const onlyOldDemo =
+    products.rowCount > 0 && products.rows.every((row) => OLD_DEMO_SKUS.includes(row.sku));
+  if (!onlyOldDemo) {
+    console.log('OK: RESET_DEMO_DATA ignorado (hay datos que no son de ejemplo)');
+    return false;
+  }
+  // Se borran solo datos de negocio; usuarios y configuración quedan intactos
+  await query(`TRUNCATE payments, sale_items, sales, purchase_items, purchases, stock_movements,
+    price_adjustment_items, price_adjustments, attachments, appointments, customer_visits,
+    products, categories, customers, suppliers RESTART IDENTITY CASCADE`);
+  console.log('OK: datos de ejemplo del almacén borrados');
+  return true;
+}
+
 // Carga datos de ejemplo de un salón de belleza si la base está vacía (SEED_DEMO=true)
-async function seedDemo() {
-  if (!config.seedDemo) return;
+async function seedDemo(force = false) {
+  if (!config.seedDemo && !force) return;
   const count = await query('SELECT COUNT(*)::int AS n FROM products');
   if (count.rows[0].n > 0) {
     console.log('OK: datos demo ya existen');
@@ -185,7 +210,8 @@ async function migrate() {
   console.log('OK: schema aplicado');
   await ensureSettings();
   await ensureAdmin();
-  await seedDemo();
+  const replaced = await replaceOldDemo();
+  await seedDemo(replaced);
   console.log('Migrations completed successfully.');
 }
 
