@@ -44,6 +44,47 @@ export const MOVEMENT_KINDS = {
   import: 'Importación',
 };
 
+// Fecha local AAAA-MM-DD (no UTC, así a la noche no salta al día siguiente)
 export function today() {
-  return new Date().toISOString().slice(0, 10);
+  return toYmd(new Date());
 }
+
+export function toYmd(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+// Suma (o resta) días a una fecha AAAA-MM-DD
+export function addDays(ymdValue, days) {
+  const [y, m, d] = ymdValue.split('-').map(Number);
+  return toYmd(new Date(y, m - 1, d + days));
+}
+
+// "miércoles 7 de octubre"
+export function longDate(ymdValue) {
+  const [y, m, d] = String(ymdValue).slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// "7 de octubre" a partir de una fecha de cumpleaños (ignora el año)
+export function birthdayLabel(value) {
+  if (!value) return '—';
+  const [, m, d] = String(value).slice(0, 10).split('-').map(Number);
+  return new Date(2000, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+}
+
+export function minutesLabel(min) {
+  const n = Number(min || 0);
+  if (!n) return '—';
+  const h = Math.floor(n / 60);
+  const r = n % 60;
+  if (!h) return `${r} min`;
+  return r ? `${h} h ${r} min` : `${h} h`;
+}
+
+export const APPOINTMENT_STATUSES = {
+  scheduled: 'Pendiente',
+  done: 'Realizado',
+  cancelled: 'Cancelado',
+  no_show: 'No vino',
+};

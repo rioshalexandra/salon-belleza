@@ -64,6 +64,9 @@ router.get('/', async (req, res, next) => {
     if (req.query.active !== 'all') {
       where.push('p.active = true');
     }
+    // Filtro por tipo: ?type=service (servicios del salón) o ?type=product (productos con stock)
+    if (req.query.type === 'service') where.push('p.is_service = true');
+    if (req.query.type === 'product') where.push('p.is_service = false');
     const sql = `${PRODUCT_SELECT} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY p.name`;
     const result = await query(sql, params);
     res.json({ data: result.rows });
@@ -160,7 +163,10 @@ router.post('/:id/adjust-stock', async (req, res, next) => {
 async function createOrUpdateProduct(id, body = {}) {
   const sku = String(body.sku || '').trim();
   const name = String(body.name || '').trim();
-  if (!sku || !name) throw httpError(400, 'SKU y nombre son obligatorios');
+  if (!sku || !name) throw httpError(400, 'Código y nombre son obligatorios');
+  // Un servicio (corte, color, manicura…) no maneja stock ni stock mínimo.
+  const isService = body.isService === true || body.isService === 'true';
+  const durationMin = isService && Number(body.durationMin) > 0 ? Math.round(Number(body.durationMin)) : null;
   const values = [
     sku,
     name,
@@ -170,27 +176,31 @@ async function createOrUpdateProduct(id, body = {}) {
     emptyToNull(body.barcode),
     money(body.costPrice),
     money(body.salePrice),
-    qty(body.minStock),
+    isService ? 0 : qty(body.minStock),
     body.active !== false,
+    isService,
+    durationMin,
   ];
   if (id) {
     const result = await query(
       `UPDATE products
        SET sku = $1, name = $2, description = $3, category_id = $4, unit = $5, barcode = $6,
-           cost_price = $7, sale_price = $8, min_stock = $9, active = $10, updated_at = now()
-       WHERE id = $11
+           cost_price = $7, sale_price = $8, min_stock = $9, active = $10,
+           is_service = $11, duration_min = $12, updated_at = now()
+       WHERE id = $13
        RETURNING *`,
       [...values, id]
     );
     if (!result.rowCount) throw httpError(404, 'Producto no encontrado');
     return result.rows[0];
   }
-  const stockQty = qty(body.stockQty);
+  const stockQty = isService ? 0 : qty(body.stockQty);
   const result = await withTransaction(async (client) => {
     const inserted = await client.query(
       `INSERT INTO products
-         (sku, name, description, category_id, unit, barcode, cost_price, sale_price, stock_qty, min_stock, active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)
+         (sku, name, description, category_id, unit, barcode, cost_price, sale_price, stock_qty, min_stock, active,
+          is_service, duration_min)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12)
        RETURNING *`,
       values
     );

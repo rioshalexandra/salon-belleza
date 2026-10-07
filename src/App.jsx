@@ -15,6 +15,7 @@ import PricesPage from './pages/PricesPage';
 import ImportExportPage from './pages/ImportExportPage';
 import MovementsPage from './pages/MovementsPage';
 import SettingsPage from './pages/SettingsPage';
+import AgendaPage from './pages/AgendaPage';
 
 export default function App() {
   return (
@@ -31,13 +32,17 @@ export default function App() {
         }
       >
         <Route index element={<DashboardPage />} />
-        <Route path="productos" element={<ProductsPage />} />
+        <Route path="agenda" element={<AgendaPage />} />
+        {/* key distinta para que no se mezcle el estado entre servicios y productos */}
+        <Route path="servicios" element={<ProductsPage key="services" kind="services" />} />
+        <Route path="servicios/:id" element={<ProductDetailPage />} />
+        <Route path="productos" element={<ProductsPage key="products" kind="products" />} />
         <Route path="productos/:id" element={<ProductDetailPage />} />
         <Route path="movimientos" element={<MovementsPage />} />
-        <Route path="clientes" element={<PartiesPage kind="customers" />} />
-        <Route path="clientes/:id" element={<PartyDetailPage kind="customers" />} />
-        <Route path="proveedores" element={<PartiesPage kind="suppliers" />} />
-        <Route path="proveedores/:id" element={<PartyDetailPage kind="suppliers" />} />
+        <Route path="clientes" element={<PartiesPage key="customers" kind="customers" />} />
+        <Route path="clientes/:id" element={<PartyDetailPage key="customers" kind="customers" />} />
+        <Route path="proveedores" element={<PartiesPage key="suppliers" kind="suppliers" />} />
+        <Route path="proveedores/:id" element={<PartyDetailPage key="suppliers" kind="suppliers" />} />
         <Route path="ventas" element={<DocumentsPage kind="sales" />} />
         <Route path="ventas/nueva" element={<DocumentEditorPage kind="sales" />} />
         <Route path="ventas/:id" element={<DocumentEditorPage kind="sales" />} />
@@ -56,7 +61,7 @@ export default function App() {
 function RequireAuth({ children }) {
   const { isAuthenticated, loading } = useAuth();
   if (loading) {
-    return <div className="grid min-h-full place-items-center text-[#70757a]">Cargando…</div>;
+    return <div className="grid min-h-full place-items-center text-[#7a6f73]">Cargando…</div>;
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;

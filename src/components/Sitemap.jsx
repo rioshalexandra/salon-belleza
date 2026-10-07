@@ -2,6 +2,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 
 const SECTIONS = [
   { test: (path) => path === '/', to: '/', label: 'Inicio', end: true },
+  { test: (path) => path.startsWith('/agenda'), to: '/agenda', label: 'Agenda' },
+  { test: (path) => path.startsWith('/servicios'), to: '/servicios', label: 'Servicios' },
   { test: (path) => path.startsWith('/productos'), to: '/productos', label: 'Productos' },
   { test: (path) => path.startsWith('/movimientos'), to: '/movimientos', label: 'Movimientos' },
   { test: (path) => path.startsWith('/clientes'), to: '/clientes', label: 'Clientes' },

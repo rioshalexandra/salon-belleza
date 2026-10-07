@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'stock_token';
+const TOKEN_KEY = 'stock_token'; // se mantiene el nombre para no cerrar sesiones abiertas
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -65,7 +65,7 @@ export const api = {
   logout: () => request('/api/auth/logout', { method: 'POST', body: {} }),
   settings: () => request('/api/settings'),
   saveSettings: (body) => request('/api/settings', { method: 'PUT', body }),
-  dashboard: () => request('/api/dashboard'),
+  dashboard: (today) => request(`/api/dashboard${today ? `?today=${today}` : ''}`),
   products: (params = '') => request(`/api/products${params}`),
   product: (id) => request(`/api/products/${id}`),
   saveProduct: (id, body) =>
@@ -80,6 +80,21 @@ export const api = {
   saveCustomer: (id, body) =>
     id ? request(`/api/customers/${id}`, { method: 'PUT', body }) : request('/api/customers', { method: 'POST', body }),
   deleteCustomer: (id) => request(`/api/customers/${id}`, { method: 'DELETE' }),
+  // Historial de visitas del cliente
+  addVisit: (customerId, body) => request(`/api/customers/${customerId}/visits`, { method: 'POST', body }),
+  deleteVisit: (customerId, visitId) =>
+    request(`/api/customers/${customerId}/visits/${visitId}`, { method: 'DELETE' }),
+  // Agenda de turnos
+  appointments: (from, to) => request(`/api/appointments?from=${from}&to=${to || from}`),
+  staffNames: () => request('/api/appointments/staff'),
+  saveAppointment: (id, body) =>
+    id
+      ? request(`/api/appointments/${id}`, { method: 'PUT', body })
+      : request('/api/appointments', { method: 'POST', body }),
+  setAppointmentStatus: (id, status) =>
+    request(`/api/appointments/${id}/status`, { method: 'POST', body: { status } }),
+  deleteAppointment: (id) => request(`/api/appointments/${id}`, { method: 'DELETE' }),
+  checkoutAppointment: (id) => request(`/api/appointments/${id}/checkout`, { method: 'POST', body: {} }),
   suppliers: (params = '') => request(`/api/suppliers${params}`),
   supplier: (id) => request(`/api/suppliers/${id}`),
   saveSupplier: (id, body) =>

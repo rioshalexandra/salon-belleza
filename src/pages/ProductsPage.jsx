@@ -4,10 +4,30 @@ import { api, attachmentFileUrl } from '../api';
 import ConfirmDangerModal from '../components/ConfirmDangerModal';
 import ProductForm, { emptyProduct, toProductForm } from '../components/ProductForm';
 import StockAdjustModal from '../components/StockAdjustModal';
-import { money, qty } from '../format';
+import { minutesLabel, money, qty } from '../format';
 import { useStore } from '../store';
 
-export default function ProductsPage() {
+// Textos de cada variante de la página: productos de reventa o servicios del salón
+const COPY = {
+  products: {
+    title: 'Productos',
+    newLabel: 'Nuevo producto',
+    path: '/productos',
+    type: 'product',
+    empty: 'No hay productos con esos filtros.',
+  },
+  services: {
+    title: 'Servicios',
+    newLabel: 'Nuevo servicio',
+    path: '/servicios',
+    type: 'service',
+    empty: 'Todavía no cargaste servicios. Probá con "Corte", "Color" o "Manicura".',
+  },
+};
+
+export default function ProductsPage({ kind = 'products' }) {
+  const meta = COPY[kind];
+  const isServices = kind === 'services';
   const { currency } = useStore();
   const [params, setParams] = useSearchParams();
   const [rows, setRows] = useState([]);
@@ -22,10 +42,11 @@ export default function ProductsPage() {
 
   const query = useMemo(() => {
     const search = new URLSearchParams();
+    search.set('type', meta.type);
     if (q.trim()) search.set('q', q.trim());
     if (categoryId) search.set('categoryId', categoryId);
     return `?${search.toString()}`;
-  }, [q, categoryId]);
+  }, [q, categoryId, meta.type]);
 
   async function load() {
     const [products, cats] = await Promise.all([api.products(query), api.categories()]);
@@ -51,15 +72,15 @@ export default function ProductsPage() {
   return (
     <div className="h-full overflow-auto p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="mr-auto text-2xl">Productos</h1>
+        <h1 className="mr-auto text-2xl">{meta.title}</h1>
         <input
-          className="h-9 w-full min-w-0 rounded-full border border-[#dadce0] px-4 text-sm outline-none focus:border-[#1a73e8] sm:w-auto sm:min-w-[220px]"
-          placeholder="Buscar SKU, nombre o código…"
+          className="h-9 w-full min-w-0 rounded-full border border-[#e7dfe1] px-4 text-sm outline-none focus:border-[#8e3b5f] sm:w-auto sm:min-w-[220px]"
+          placeholder={isServices ? 'Buscar servicio…' : 'Buscar nombre, código o código de barras…'}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <select
-          className="h-9 rounded-full border border-[#dadce0] px-3 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
         >
@@ -70,8 +91,8 @@ export default function ProductsPage() {
             </option>
           ))}
         </select>
-        <button className="pill-btn primary" onClick={() => setEditing(emptyProduct())}>
-          Nuevo producto
+        <button className="pill-btn primary" onClick={() => setEditing(emptyProduct(isServices))}>
+          {meta.newLabel}
         </button>
       </div>
       <form
@@ -85,7 +106,7 @@ export default function ProductsPage() {
         }}
       >
         <input
-          className="h-9 rounded-full border border-[#dadce0] px-4 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-4 text-sm"
           placeholder="Nueva categoría"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
@@ -95,14 +116,14 @@ export default function ProductsPage() {
         </button>
       </form>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Producto</th>
+              <th>{isServices ? 'Servicio' : 'Producto'}</th>
               <th>Categoría</th>
-              <th>Stock</th>
-              <th>Costo</th>
+              <th>{isServices ? 'Duración' : 'Stock'}</th>
+              <th>{isServices ? 'Costo insumos' : 'Costo'}</th>
               <th>Precio</th>
               <th />
             </tr>
@@ -116,32 +137,43 @@ export default function ProductsPage() {
                       <img
                         src={attachmentFileUrl(row.photo_id)}
                         alt=""
-                        className="h-11 w-11 shrink-0 rounded-lg border border-[#dadce0] object-cover"
+                        className="h-11 w-11 shrink-0 rounded-lg border border-[#e7dfe1] object-cover"
                       />
                     ) : (
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-dashed border-[#dadce0] text-xs text-[#70757a]">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-dashed border-[#e7dfe1] text-xs text-[#7a6f73]">
                         Foto
                       </div>
                     )}
                     <div>
-                      <Link className="font-medium text-[#1a73e8]" to={`/productos/${row.id}`}>
+                      <Link className="font-medium text-[#8e3b5f]" to={`${meta.path}/${row.id}`}>
                         {row.name}
                       </Link>
-                      <div className="text-xs text-[#70757a]">{row.sku}</div>
+                      <div className="text-xs text-[#7a6f73]">{row.sku}</div>
                     </div>
                   </div>
                 </td>
                 <td>{row.category_name || '—'}</td>
                 <td>
-                  {qty(row.stock_qty)} {row.unit}
+                  {isServices ? (
+                    minutesLabel(row.duration_min)
+                  ) : (
+                    <>
+                      {qty(row.stock_qty)} {row.unit}
+                      {Number(row.min_stock) > 0 && Number(row.stock_qty) <= Number(row.min_stock) && (
+                        <span className="badge badge-low ml-2">Reponer</span>
+                      )}
+                    </>
+                  )}
                 </td>
                 <td>{money(row.cost_price, currency)}</td>
                 <td>{money(row.sale_price, currency)}</td>
                 <td className="text-right">
                   <div className="flex flex-wrap justify-end gap-2">
-                    <button className="pill-btn" onClick={() => setAdjusting(row)}>
-                      Stock
-                    </button>
+                    {!isServices && (
+                      <button className="pill-btn" onClick={() => setAdjusting(row)}>
+                        Stock
+                      </button>
+                    )}
                     <button className="pill-btn" onClick={() => setEditing(toProductForm(row))}>
                       Editar
                     </button>
@@ -154,8 +186,8 @@ export default function ProductsPage() {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={6}>
-                  No hay productos con esos filtros.
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={6}>
+                  {meta.empty}
                 </td>
               </tr>
             )}
@@ -176,7 +208,7 @@ export default function ProductsPage() {
       {removing && (
         <ConfirmDangerModal
           title={`Borrar ${removing.name}`}
-          message={`Se va a borrar el producto ${removing.name} (${removing.sku}) y su historial de stock. Si está en ventas o compras, primero hay que borrar esos comprobantes.`}
+          message={`Se va a borrar ${isServices ? 'el servicio' : 'el producto'} ${removing.name} (${removing.sku}). Si está en ventas o compras, primero hay que borrar esos comprobantes.`}
           onClose={() => setRemoving(null)}
           onConfirm={async () => {
             await api.deleteProduct(removing.id);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import ConfirmDangerModal from '../components/ConfirmDangerModal';
+import CustomerBeautyPanel from '../components/CustomerBeautyPanel';
 import PartyForm, { toPartyForm } from '../components/PartyForm';
 import StatusBadge from '../components/StatusBadge';
 import { METHODS, money, ymd } from '../format';
@@ -51,18 +52,20 @@ export default function PartyDetailPage({ kind }) {
     load().catch((err) => setError(err.message));
   }, [id, kind]);
 
-  if (!party) return <div className="p-6 text-[#70757a]">{error || 'Cargando…'}</div>;
+  if (!party) return <div className="p-6 text-[#7a6f73]">{error || 'Cargando…'}</div>;
 
   return (
     <div className="h-full overflow-auto p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <Link className="text-sm text-[#1a73e8]" to={meta.back}>
+          <Link className="text-sm text-[#8e3b5f]" to={meta.back}>
             ← {meta.listLabel}
           </Link>
           <h1 className="text-2xl">{party.name}</h1>
-          <div className="text-sm text-[#70757a]">
-            {party.tax_id || 'Sin CUIT'} · {party.phone || 'Sin teléfono'}
+          <div className="text-sm text-[#7a6f73]">
+            {kind === 'customers'
+              ? [party.phone || 'Sin teléfono', party.email].filter(Boolean).join(' · ')
+              : `${party.tax_id || 'Sin CUIT'} · ${party.phone || 'Sin teléfono'}`}
           </div>
         </div>
         <button className="pill-btn" onClick={() => setEditing(true)}>
@@ -76,10 +79,11 @@ export default function PartyDetailPage({ kind }) {
         <div className="kpi-label">Saldo</div>
         <div className="kpi-value">{money(party.balance, currency)}</div>
       </div>
+      {kind === 'customers' && <CustomerBeautyPanel party={party} onChanged={load} />}
       <div className="grid gap-6 xl:grid-cols-2">
         <section>
           <h2 className="mb-3 text-lg font-medium">{meta.partyLabel}</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
             <table className="data-table">
               <thead>
                 <tr>
@@ -93,7 +97,7 @@ export default function PartyDetailPage({ kind }) {
                 {(party.documents || []).map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <Link className="text-[#1a73e8]" to={`${meta.docs}/${row.id}`}>
+                      <Link className="text-[#8e3b5f]" to={`${meta.docs}/${row.id}`}>
                         {row.number}
                       </Link>
                     </td>
@@ -106,7 +110,7 @@ export default function PartyDetailPage({ kind }) {
                 ))}
                 {!party.documents?.length && (
                   <tr>
-                    <td className="py-8 text-center text-[#70757a]" colSpan={4}>
+                    <td className="py-8 text-center text-[#7a6f73]" colSpan={4}>
                       Sin comprobantes.
                     </td>
                   </tr>
@@ -117,7 +121,7 @@ export default function PartyDetailPage({ kind }) {
         </section>
         <section>
           <h2 className="mb-3 text-lg font-medium">Pagos</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
             <table className="data-table">
               <thead>
                 <tr>
@@ -136,7 +140,7 @@ export default function PartyDetailPage({ kind }) {
                 ))}
                 {!party.payments?.length && (
                   <tr>
-                    <td className="py-8 text-center text-[#70757a]" colSpan={3}>
+                    <td className="py-8 text-center text-[#7a6f73]" colSpan={3}>
                       Sin pagos.
                     </td>
                   </tr>
@@ -161,6 +165,7 @@ export default function PartyDetailPage({ kind }) {
         <PartyForm
           title={`Editar ${meta.title.toLowerCase()}`}
           form={toPartyForm(party)}
+          kind={kind}
           onClose={() => setEditing(false)}
           onSave={async (body) => {
             await meta.save(party.id, body);

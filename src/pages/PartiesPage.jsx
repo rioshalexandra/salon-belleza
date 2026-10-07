@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import ConfirmDangerModal from '../components/ConfirmDangerModal';
 import PartyForm, { emptyParty, toPartyForm } from '../components/PartyForm';
-import { money } from '../format';
+import { money, ymd } from '../format';
 import { useStore } from '../store';
 
 const COPY = {
@@ -55,8 +55,8 @@ export default function PartiesPage({ kind }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="mr-auto text-2xl">{meta.title}</h1>
         <input
-          className="h-9 w-full min-w-0 rounded-full border border-[#dadce0] px-4 text-sm outline-none focus:border-[#1a73e8] sm:w-auto sm:min-w-[240px]"
-          placeholder="Buscar por nombre, CUIT o teléfono…"
+          className="h-9 w-full min-w-0 rounded-full border border-[#e7dfe1] px-4 text-sm outline-none focus:border-[#8e3b5f] sm:w-auto sm:min-w-[240px]"
+          placeholder={kind === 'customers' ? 'Buscar por nombre o teléfono…' : 'Buscar por nombre, CUIT o teléfono…'}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -65,13 +65,23 @@ export default function PartiesPage({ kind }) {
         </button>
       </div>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>CUIT / DNI</th>
-              <th>Teléfono</th>
+              {kind === 'customers' ? (
+                <>
+                  <th>Teléfono</th>
+                  <th>Última visita</th>
+                  <th>Próximo turno</th>
+                </>
+              ) : (
+                <>
+                  <th>CUIT / DNI</th>
+                  <th>Teléfono</th>
+                </>
+              )}
               <th>Saldo</th>
               <th />
             </tr>
@@ -80,12 +90,22 @@ export default function PartiesPage({ kind }) {
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>
-                  <Link className="font-medium text-[#1a73e8]" to={`${meta.path}/${row.id}`}>
+                  <Link className="font-medium text-[#8e3b5f]" to={`${meta.path}/${row.id}`}>
                     {row.name}
                   </Link>
                 </td>
-                <td>{row.tax_id || '—'}</td>
-                <td>{row.phone || '—'}</td>
+                {kind === 'customers' ? (
+                  <>
+                    <td>{row.phone || '—'}</td>
+                    <td>{row.last_visit ? ymd(row.last_visit) : '—'}</td>
+                    <td>{row.next_appointment ? ymd(row.next_appointment) : '—'}</td>
+                  </>
+                ) : (
+                  <>
+                    <td>{row.tax_id || '—'}</td>
+                    <td>{row.phone || '—'}</td>
+                  </>
+                )}
                 <td>{money(row.balance, currency)}</td>
                 <td className="text-right">
                   <div className="flex flex-wrap justify-end gap-2">
@@ -101,7 +121,7 @@ export default function PartiesPage({ kind }) {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={5}>
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={kind === 'customers' ? 6 : 5}>
                   No hay registros.
                 </td>
               </tr>
@@ -125,6 +145,7 @@ export default function PartiesPage({ kind }) {
         <PartyForm
           title={editing.id ? 'Editar' : meta.newLabel}
           form={editing}
+          kind={kind}
           onClose={() => setEditing(null)}
           onSave={async (body) => {
             await meta.save(editing.id, body);

@@ -68,17 +68,17 @@ export default function AttachmentsPanel({
           {busy ? 'Subiendo…' : 'Subir'}
         </button>
       </div>
-      {helper && <p className="mb-3 text-sm text-[#70757a]">{helper}</p>}
+      {helper && <p className="mb-3 text-sm text-[#7a6f73]">{helper}</p>}
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((row) => (
-          <article key={row.id} className="overflow-hidden rounded-xl border border-[#dadce0]">
+          <article key={row.id} className="overflow-hidden rounded-xl border border-[#e7dfe1]">
             {row.kind === 'photo' ? (
               <a href={attachmentFileUrl(row.id)} target="_blank" rel="noreferrer">
                 <img
                   src={attachmentFileUrl(row.id)}
                   alt={row.original_name}
-                  className="h-40 w-full bg-[#f8f9fa] object-cover"
+                  className="h-40 w-full bg-[#fbf7f8] object-cover"
                 />
               </a>
             ) : (
@@ -86,7 +86,7 @@ export default function AttachmentsPanel({
                 href={attachmentFileUrl(row.id)}
                 target="_blank"
                 rel="noreferrer"
-                className="flex h-40 items-center justify-center bg-[#f8f9fa] px-4 text-center text-sm font-medium text-[#1a73e8]"
+                className="flex h-40 items-center justify-center bg-[#fbf7f8] px-4 text-center text-sm font-medium text-[#8e3b5f]"
               >
                 {row.original_name}
               </a>
@@ -102,7 +102,7 @@ export default function AttachmentsPanel({
           </article>
         ))}
         {!items.length && (
-          <div className="rounded-xl border border-dashed border-[#dadce0] px-4 py-8 text-center text-sm text-[#70757a] sm:col-span-2 lg:col-span-3">
+          <div className="rounded-xl border border-dashed border-[#e7dfe1] px-4 py-8 text-center text-sm text-[#7a6f73] sm:col-span-2 lg:col-span-3">
             Todavía no hay archivos.
           </div>
         )}

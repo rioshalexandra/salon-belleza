@@ -1,28 +1,23 @@
-# Gestión de stock
+# Salón de belleza
 
-Stock, ventas a clientes y compras a proveedores. Un solo servicio sirve la interfaz y la API; PostgreSQL guarda los datos.
+Gestión para un salón de belleza: agenda de turnos, ficha de clientes, servicios y venta de productos con stock. Un solo servicio sirve la interfaz y la API; PostgreSQL guarda los datos.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/gestion-stock?utm_medium=integration&utm_source=button&utm_campaign=gestion-stock)
-
-Template publicado: [railway.com/deploy/gestion-stock](https://railway.com/deploy/gestion-stock)
+Basado en el template [gestion-stock](https://github.com/ProfesIA-IA/gestion-stock) de ProfesIA.
 
 ## Qué hace
 
-El staff entra con usuario y contraseña. El comercio queda operativo con productos de ejemplo si `SEED_DEMO=true`.
+El staff entra con usuario y contraseña. Con `SEED_DEMO=true` y la base vacía, se cargan servicios, productos, clientes y turnos de ejemplo.
 
 | Área | Qué incluye |
 |------|-------------|
-| **Productos** | SKU, categoría, costo, precio, stock, mínimo y ajuste manual |
-| **Clientes** | Ficha, saldo de cuenta corriente e historial de ventas/cobros |
-| **Proveedores** | Ficha, saldo a pagar e historial de compras/pagos |
-| **Ventas** | Borrador, confirmación (descuenta stock), cobros parciales o totales |
-| **Compras** | Borrador, confirmación (ingresa stock y actualiza costo), pagos al proveedor |
-| **Precios** | Ajuste masivo por porcentaje o importe, con previsualización e historial |
-| **Pagos** | Historial de cobros y pagos, filtros y export |
-| **CSV / Excel** | Carga y descarga de productos, clientes y proveedores |
-| **Configuración** | Nombre, zona horaria, moneda e IVA |
-
-Zona horaria por defecto: `America/Argentina/Buenos_Aires`. Moneda: `ARS`.
+| **Inicio** | Turnos de hoy, ventas del mes, cumpleaños del mes y productos para reponer |
+| **Agenda** | Turnos por día con vista semanal, profesional, estado (pendiente, realizado, no vino, cancelado) y botón **Cobrar** que arma la venta |
+| **Clientes** | Ficha de belleza (cumpleaños, Instagram, tipo de cabello y piel, fórmula de color, alergias, preferencias), historial de visitas, turnos y saldo |
+| **Servicios** | Corte, color, manicura… con precio, costo de insumos y duración. No manejan stock |
+| **Productos** | Productos de reventa con código, categoría, costo, precio, stock y mínimo |
+| **Ventas** | Servicios y productos en el mismo comprobante; al confirmar solo descuenta stock de productos |
+| **Proveedores y compras** | Compras que ingresan stock y actualizan costo, pagos al proveedor |
+| **Precios, pagos, CSV / Excel, configuración** | Igual que el template original |
 
 ## Stack
 

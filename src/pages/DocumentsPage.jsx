@@ -88,13 +88,13 @@ export default function DocumentsPage({ kind }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="mr-auto text-2xl">{meta.title}</h1>
         <input
-          className="h-9 w-full min-w-0 rounded-full border border-[#dadce0] px-4 text-sm outline-none focus:border-[#1a73e8] sm:w-auto sm:min-w-[220px]"
+          className="h-9 w-full min-w-0 rounded-full border border-[#e7dfe1] px-4 text-sm outline-none focus:border-[#8e3b5f] sm:w-auto sm:min-w-[220px]"
           placeholder="Buscar número o nombre…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <select
-          className="h-9 rounded-full border border-[#dadce0] px-3 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
@@ -108,7 +108,7 @@ export default function DocumentsPage({ kind }) {
         </Link>
       </div>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
@@ -130,7 +130,7 @@ export default function DocumentsPage({ kind }) {
               >
                 <td>
                   <Link
-                    className="font-medium text-[#1a73e8]"
+                    className="font-medium text-[#8e3b5f]"
                     to={`${meta.path}/${row.id}`}
                     onClick={(ev) => ev.stopPropagation()}
                   >
@@ -178,7 +178,7 @@ export default function DocumentsPage({ kind }) {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={7}>
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={7}>
                   No hay comprobantes.
                 </td>
               </tr>

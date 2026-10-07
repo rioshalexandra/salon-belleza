@@ -47,17 +47,17 @@ export default function PaymentsPage() {
       </div>
       <div className="mb-4 flex flex-wrap gap-2">
         <input
-          className="h-9 min-w-[180px] rounded-full border border-[#dadce0] px-4 text-sm"
+          className="h-9 min-w-[180px] rounded-full border border-[#e7dfe1] px-4 text-sm"
           placeholder="Buscar cliente, proveedor o n°…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <select className="h-9 rounded-full border border-[#dadce0] px-3 text-sm" value={kind} onChange={(e) => setKind(e.target.value)}>
+        <select className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm" value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="">Cobros y pagos</option>
           <option value="in">Cobros</option>
           <option value="out">Pagos a proveedores</option>
         </select>
-        <select className="h-9 rounded-full border border-[#dadce0] px-3 text-sm" value={method} onChange={(e) => setMethod(e.target.value)}>
+        <select className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm" value={method} onChange={(e) => setMethod(e.target.value)}>
           <option value="">Todos los medios</option>
           {Object.entries(METHODS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -65,8 +65,8 @@ export default function PaymentsPage() {
             </option>
           ))}
         </select>
-        <input className="h-9 rounded-full border border-[#dadce0] px-3 text-sm" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input className="h-9 rounded-full border border-[#dadce0] px-3 text-sm" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        <input className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <div className="kpi-card">
@@ -83,7 +83,7 @@ export default function PaymentsPage() {
         </div>
       </div>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
@@ -107,11 +107,11 @@ export default function PaymentsPage() {
                 <td>{row.customer_name || row.supplier_name || '—'}</td>
                 <td>
                   {row.sale_id ? (
-                    <Link className="text-[#1a73e8]" to={`/ventas/${row.sale_id}`}>
+                    <Link className="text-[#8e3b5f]" to={`/ventas/${row.sale_id}`}>
                       {row.sale_number}
                     </Link>
                   ) : row.purchase_id ? (
-                    <Link className="text-[#1a73e8]" to={`/compras/${row.purchase_id}`}>
+                    <Link className="text-[#8e3b5f]" to={`/compras/${row.purchase_id}`}>
                       {row.purchase_number}
                     </Link>
                   ) : (
@@ -124,7 +124,7 @@ export default function PaymentsPage() {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={6}>
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={6}>
                   No hay pagos con esos filtros.
                 </td>
               </tr>

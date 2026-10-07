@@ -52,13 +52,13 @@ export default function MovementsPage() {
       <h1 className="mb-4 text-2xl">Movimientos de stock</h1>
       <div className="mb-4 flex flex-wrap gap-2">
         <input
-          className="h-9 min-w-[200px] flex-1 rounded-full border border-[#dadce0] px-4 text-sm sm:max-w-xs"
+          className="h-9 min-w-[200px] flex-1 rounded-full border border-[#e7dfe1] px-4 text-sm sm:max-w-xs"
           placeholder="Buscar producto, SKU o comprobante…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <select
-          className="h-9 rounded-full border border-[#dadce0] px-3 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
           value={kind}
           onChange={(e) => setKind(e.target.value)}
         >
@@ -70,13 +70,13 @@ export default function MovementsPage() {
           ))}
         </select>
         <input
-          className="h-9 rounded-full border border-[#dadce0] px-3 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
         />
         <input
-          className="h-9 rounded-full border border-[#dadce0] px-3 text-sm"
+          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
@@ -97,7 +97,7 @@ export default function MovementsPage() {
         </div>
       </div>
       {params.get('productId') && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-[#e8f0fe] px-3 py-2 text-sm text-[#174ea6]">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-[#f8e9ef] px-3 py-2 text-sm text-[#6e2b48]">
           Mostrando un producto.
           <button
             className="underline"
@@ -115,7 +115,7 @@ export default function MovementsPage() {
         </div>
       )}
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
@@ -135,10 +135,10 @@ export default function MovementsPage() {
                   <span className={`badge badge-${row.kind}`}>{MOVEMENT_KINDS[row.kind] || row.kind}</span>
                 </td>
                 <td>
-                  <Link className="font-medium text-[#1a73e8]" to={`/productos/${row.product_id}`}>
+                  <Link className="font-medium text-[#8e3b5f]" to={`/productos/${row.product_id}`}>
                     {row.product_name}
                   </Link>
-                  <div className="text-xs text-[#70757a]">{row.sku}</div>
+                  <div className="text-xs text-[#7a6f73]">{row.sku}</div>
                 </td>
                 <td className={Number(row.qty) < 0 ? 'font-medium text-[#c5221f]' : 'font-medium text-[#137333]'}>
                   {Number(row.qty) > 0 ? '+' : ''}
@@ -146,11 +146,11 @@ export default function MovementsPage() {
                 </td>
                 <td>
                   {row.sale_id ? (
-                    <Link className="text-[#1a73e8]" to={`/ventas/${row.sale_id}`}>
+                    <Link className="text-[#8e3b5f]" to={`/ventas/${row.sale_id}`}>
                       {row.sale_number}
                     </Link>
                   ) : row.purchase_id ? (
-                    <Link className="text-[#1a73e8]" to={`/compras/${row.purchase_id}`}>
+                    <Link className="text-[#8e3b5f]" to={`/compras/${row.purchase_id}`}>
                       {row.purchase_number}
                     </Link>
                   ) : (
@@ -162,7 +162,7 @@ export default function MovementsPage() {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={6}>
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={6}>
                   No hay movimientos con esos filtros.
                 </td>
               </tr>

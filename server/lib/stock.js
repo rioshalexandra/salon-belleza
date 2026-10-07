@@ -3,10 +3,13 @@ import { httpError, money, qty } from './helpers.js';
 export async function applyStock(client, { productId, kind, delta, unitCost, refType, refId, notes }) {
   const change = qty(delta);
   if (!change) return;
-  const product = await client.query('SELECT id, name, stock_qty FROM products WHERE id = $1 FOR UPDATE', [
-    productId,
-  ]);
+  const product = await client.query(
+    'SELECT id, name, stock_qty, is_service FROM products WHERE id = $1 FOR UPDATE',
+    [productId]
+  );
   if (!product.rowCount) throw httpError(404, 'Producto no encontrado');
+  // Los servicios del salón (corte, color, etc.) no tienen stock: se venden sin mover inventario.
+  if (product.rows[0].is_service) return;
   const next = qty(Number(product.rows[0].stock_qty) + change);
   if (next < 0) {
     throw httpError(

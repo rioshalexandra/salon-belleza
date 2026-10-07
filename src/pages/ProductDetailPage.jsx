@@ -5,7 +5,7 @@ import AttachmentsPanel from '../components/AttachmentsPanel';
 import ConfirmDangerModal from '../components/ConfirmDangerModal';
 import ProductForm, { toProductForm } from '../components/ProductForm';
 import StockAdjustModal from '../components/StockAdjustModal';
-import { MOVEMENT_KINDS, money, qty, ymd } from '../format';
+import { MOVEMENT_KINDS, minutesLabel, money, qty, ymd } from '../format';
 import { useStore } from '../store';
 
 export default function ProductDetailPage() {
@@ -29,23 +29,29 @@ export default function ProductDetailPage() {
     load().catch((err) => setError(err.message));
   }, [id]);
 
-  if (!product) return <div className="p-6 text-[#70757a]">{error || 'Cargando…'}</div>;
+  if (!product) return <div className="p-6 text-[#7a6f73]">{error || 'Cargando…'}</div>;
+
+  // Los servicios comparten esta página pero sin stock ni movimientos
+  const isService = Boolean(product.is_service);
+  const backPath = isService ? '/servicios' : '/productos';
 
   return (
     <div className="h-full overflow-auto p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <Link className="text-sm text-[#1a73e8]" to="/productos">
-            ← Productos
+          <Link className="text-sm text-[#8e3b5f]" to={backPath}>
+            ← {isService ? 'Servicios' : 'Productos'}
           </Link>
           <h1 className="text-2xl">{product.name}</h1>
-          <div className="text-sm text-[#70757a]">
+          <div className="text-sm text-[#7a6f73]">
             {product.sku} · {product.category_name || 'Sin categoría'}
           </div>
         </div>
-        <button className="pill-btn" onClick={() => setAdjusting(true)}>
-          Ajustar stock
-        </button>
+        {!isService && (
+          <button className="pill-btn" onClick={() => setAdjusting(true)}>
+            Ajustar stock
+          </button>
+        )}
         <button className="pill-btn" onClick={() => setEditing(true)}>
           Editar
         </button>
@@ -56,13 +62,13 @@ export default function ProductDetailPage() {
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="kpi-card">
-          <div className="kpi-label">Stock</div>
+          <div className="kpi-label">{isService ? 'Duración' : 'Stock'}</div>
           <div className="kpi-value">
-            {qty(product.stock_qty)} {product.unit}
+            {isService ? minutesLabel(product.duration_min) : `${qty(product.stock_qty)} ${product.unit}`}
           </div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Costo</div>
+          <div className="kpi-label">{isService ? 'Costo de insumos' : 'Costo'}</div>
           <div className="kpi-value">{money(product.cost_price, currency)}</div>
         </div>
         <div className="kpi-card">
@@ -76,16 +82,22 @@ export default function ProductDetailPage() {
         entityId={product.id}
         items={product.attachments || []}
         accept="image/jpeg,image/png,image/webp,image/gif,image/heic,.jpg,.jpeg,.png,.webp,.gif,.heic"
-        helper="Podés subir varias fotos del producto (hasta 12 MB cada una)."
+        helper={
+          isService
+            ? 'Podés subir fotos de trabajos de este servicio (hasta 12 MB cada una).'
+            : 'Podés subir varias fotos del producto (hasta 12 MB cada una).'
+        }
         onChanged={load}
       />
+      {!isService && (
+      <>
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="mr-auto text-lg font-medium">Historial de stock</h2>
-        <Link className="text-sm text-[#1a73e8]" to={`/movimientos?productId=${product.id}`}>
+        <Link className="text-sm text-[#8e3b5f]" to={`/movimientos?productId=${product.id}`}>
           Ver todos los movimientos
         </Link>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
@@ -108,7 +120,7 @@ export default function ProductDetailPage() {
             ))}
             {!product.movements?.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={4}>
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={4}>
                   Sin movimientos.
                 </td>
               </tr>
@@ -116,14 +128,16 @@ export default function ProductDetailPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
       {removing && (
         <ConfirmDangerModal
           title={`Borrar ${product.name}`}
-          message={`Se va a borrar el producto ${product.name} (${product.sku}) y su historial de stock. Si está en ventas o compras, primero hay que borrar esos comprobantes.`}
+          message={`Se va a borrar ${isService ? 'el servicio' : 'el producto'} ${product.name} (${product.sku}). Si está en ventas o compras, primero hay que borrar esos comprobantes.`}
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
             await api.deleteProduct(product.id);
-            navigate('/productos');
+            navigate(backPath);
           }}
         />
       )}

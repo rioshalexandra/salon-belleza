@@ -13,7 +13,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || '',
   uploadDir: process.env.UPLOAD_DIR || path.join(rootDir, 'uploads'),
   storeTimezone: process.env.STORE_TIMEZONE || 'America/Argentina/Buenos_Aires',
-  storeName: process.env.STORE_NAME || 'Mi comercio',
+  storeName: process.env.STORE_NAME || 'Mi salón',
   defaultAdminUser: process.env.DEFAULT_ADMIN_USER || 'admin',
   defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
   seedDemo: String(process.env.SEED_DEMO || 'true').toLowerCase() !== 'false',

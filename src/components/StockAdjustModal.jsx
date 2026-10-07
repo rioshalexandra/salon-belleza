@@ -35,9 +35,9 @@ export default function StockAdjustModal({ product, onClose, onSave }) {
           }
         }}
       >
-        <div className="border-b border-[#dadce0] px-5 py-4">
+        <div className="border-b border-[#e7dfe1] px-5 py-4">
           <div className="text-lg">Ajustar stock</div>
-          <div className="mt-1 text-sm text-[#70757a]">
+          <div className="mt-1 text-sm text-[#7a6f73]">
             {product.name} · actual {qty(current)} {product.unit || 'un'}
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function StockAdjustModal({ product, onClose, onSave }) {
             <div className="flex flex-wrap gap-2">
               <label
                 className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium ${
-                  direction === 'up' ? 'border-[#1a73e8] bg-[#e8f0fe] text-[#1a73e8]' : 'border-[#dadce0]'
+                  direction === 'up' ? 'border-[#8e3b5f] bg-[#f8e9ef] text-[#8e3b5f]' : 'border-[#e7dfe1]'
                 }`}
               >
                 <input
@@ -62,7 +62,7 @@ export default function StockAdjustModal({ product, onClose, onSave }) {
               </label>
               <label
                 className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium ${
-                  direction === 'down' ? 'border-[#c5221f] bg-[#fce8e6] text-[#c5221f]' : 'border-[#dadce0]'
+                  direction === 'down' ? 'border-[#c5221f] bg-[#fce8e6] text-[#c5221f]' : 'border-[#e7dfe1]'
                 }`}
               >
                 <input
@@ -96,7 +96,7 @@ export default function StockAdjustModal({ product, onClose, onSave }) {
             />
           </label>
         </div>
-        <div className="flex justify-end gap-2 border-t border-[#dadce0] px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[#e7dfe1] px-5 py-3">
           <button type="button" className="pill-btn" onClick={onClose}>
             Cerrar
           </button>

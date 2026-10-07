@@ -135,6 +135,8 @@ export default function DocumentEditorPage({ kind }) {
 
   const matches = products
     .filter((product) => {
+      // En compras a proveedores no tiene sentido agregar servicios del salón
+      if (kind === 'purchases' && product.is_service) return false;
       const term = search.trim().toLowerCase();
       if (!term) return false;
       return (
@@ -267,7 +269,7 @@ export default function DocumentEditorPage({ kind }) {
       {!locked && (
         <div className="relative z-20 mb-4 max-w-xl">
           <label className="field">
-            <span>Agregar producto</span>
+            <span>Agregar servicio o producto</span>
             <input
               ref={searchRef}
               value={search}
@@ -278,12 +280,12 @@ export default function DocumentEditorPage({ kind }) {
             />
           </label>
           {!!matches.length && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[#dadce0] bg-white shadow-lg">
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[#e7dfe1] bg-white shadow-lg">
               {matches.map((product) => (
                 <button
                   key={product.id}
                   type="button"
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-[#e8f0fe]"
+                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-[#f8e9ef]"
                   onMouseDown={(ev) => {
                     ev.preventDefault();
                     addProduct(product);
@@ -291,7 +293,8 @@ export default function DocumentEditorPage({ kind }) {
                 >
                   <span>
                     {product.name}
-                    <span className="ml-2 text-[#70757a]">{product.sku}</span>
+                    <span className="ml-2 text-[#7a6f73]">{product.sku}</span>
+                    {product.is_service && <span className="badge badge-in ml-2">Servicio</span>}
                   </span>
                   <span>{money(meta.defaultPrice(product), currency)}</span>
                 </button>
@@ -300,7 +303,7 @@ export default function DocumentEditorPage({ kind }) {
           )}
         </div>
       )}
-      <div className="mb-4 overflow-x-auto rounded-xl border border-[#dadce0]">
+      <div className="mb-4 overflow-x-auto rounded-xl border border-[#e7dfe1]">
         <table className="data-table">
           <thead>
             <tr>
@@ -316,12 +319,12 @@ export default function DocumentEditorPage({ kind }) {
               <tr key={item.productId}>
                 <td>
                   {item.name}
-                  <div className="text-xs text-[#70757a]">{item.sku}</div>
+                  <div className="text-xs text-[#7a6f73]">{item.sku}</div>
                 </td>
                 <td>
                   {locked ? qty(item.qty) : (
                     <input
-                      className="w-24 rounded-lg border border-[#dadce0] px-2 py-1"
+                      className="w-24 rounded-lg border border-[#e7dfe1] px-2 py-1"
                       type="number"
                       min="0.001"
                       step="0.001"
@@ -339,7 +342,7 @@ export default function DocumentEditorPage({ kind }) {
                     money(item.price, currency)
                   ) : (
                     <input
-                      className="w-28 rounded-lg border border-[#dadce0] px-2 py-1"
+                      className="w-28 rounded-lg border border-[#e7dfe1] px-2 py-1"
                       type="number"
                       min="0"
                       step="0.01"
@@ -368,8 +371,8 @@ export default function DocumentEditorPage({ kind }) {
             ))}
             {!items.length && (
               <tr>
-                <td className="py-8 text-center text-[#70757a]" colSpan={locked ? 4 : 5}>
-                  Agregá productos para armar el comprobante.
+                <td className="py-8 text-center text-[#7a6f73]" colSpan={locked ? 4 : 5}>
+                  Agregá servicios o productos para armar el comprobante.
                 </td>
               </tr>
             )}
@@ -379,7 +382,7 @@ export default function DocumentEditorPage({ kind }) {
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <div className="text-lg font-semibold">Total {money(doc?.total ?? totals.total, currency)}</div>
         {doc?.status === 'confirmed' && (
-          <div className="text-sm text-[#70757a]">
+          <div className="text-sm text-[#7a6f73]">
             Pagado {money(doc.paid, currency)} · Saldo {money(remaining, currency)}
           </div>
         )}
@@ -390,7 +393,7 @@ export default function DocumentEditorPage({ kind }) {
                 Guardar borrador
               </button>
               <button className="pill-btn primary" disabled={busy || !items.length} onClick={() => persist(true)}>
-                Confirmar y mover stock
+                Confirmar
               </button>
             </>
           )}
@@ -444,7 +447,7 @@ export default function DocumentEditorPage({ kind }) {
       {!!doc?.payments?.length && (
         <section>
           <h2 className="mb-3 text-lg font-medium">Pagos de este comprobante</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#dadce0]">
+          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
             <table className="data-table">
               <thead>
                 <tr>

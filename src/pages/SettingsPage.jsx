@@ -36,7 +36,7 @@ export default function SettingsPage() {
       >
         {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
         <label className="field">
-          <span>Nombre del comercio</span>
+          <span>Nombre del salón</span>
           <input value={current.name} onChange={(e) => setForm({ ...current, name: e.target.value })} />
         </label>
         <label className="field">

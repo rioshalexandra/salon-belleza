@@ -17,6 +17,7 @@ import pricesRouter from './routes/prices.js';
 import ioRouter from './routes/io.js';
 import attachmentsRouter from './routes/attachments.js';
 import movementsRouter from './routes/movements.js';
+import appointmentsRouter from './routes/appointments.js';
 import { ensureUploadDir } from './lib/storage.js';
 
 assertRuntimeConfig();
@@ -58,6 +59,7 @@ app.use('/api/purchases', requireAuth, purchasesRouter);
 app.use('/api/payments', requireAuth, paymentsRouter);
 app.use('/api/prices', requireAuth, pricesRouter);
 app.use('/api/movements', requireAuth, movementsRouter);
+app.use('/api/appointments', requireAuth, appointmentsRouter);
 app.use('/api/io', requireAuth, ioRouter);
 app.use('/api/attachments', (req, res, next) => {
   if (req.method === 'GET') return next();
@@ -95,7 +97,7 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(config.port, () => {
-  console.log(`Gestión de stock listening on :${config.port}`);
+  console.log(`Salón de belleza listening on :${config.port}`);
   if (hasFrontendBuild) {
     console.log(`Serving UI from ${publicDir}`);
   }

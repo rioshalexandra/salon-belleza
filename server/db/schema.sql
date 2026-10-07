@@ -213,3 +213,66 @@ CREATE INDEX IF NOT EXISTS attachments_entity_idx ON attachments (entity_type, e
 ALTER TABLE stock_movements DROP CONSTRAINT IF EXISTS stock_movements_kind;
 ALTER TABLE stock_movements ADD CONSTRAINT stock_movements_kind
   CHECK (kind IN ('sale', 'purchase', 'adjustment', 'import', 'manual'));
+
+-- ============================================================
+-- Salón de belleza: servicios, ficha de cliente, visitas y turnos
+-- (todo idempotente: se puede correr muchas veces sin romper nada)
+-- ============================================================
+
+-- Servicios: se guardan en la misma tabla que los productos,
+-- marcados con is_service = true. No llevan stock.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_service BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS duration_min INT;
+
+-- Ficha de cliente ampliada
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS instagram TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS hair_type TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS skin_type TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS color_formula TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS sensitivities TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferences TEXT;
+
+-- Historial de visitas de cada cliente (qué se hizo, quién lo hizo, fórmula usada)
+CREATE TABLE IF NOT EXISTS customer_visits (
+  id SERIAL PRIMARY KEY,
+  customer_id INT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  visited_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  service TEXT NOT NULL,
+  staff_name TEXT,
+  formula TEXT,
+  notes TEXT,
+  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS customer_visits_customer_idx ON customer_visits (customer_id, visited_at DESC);
+
+-- Agenda de turnos. Día y hora se guardan por separado (hora local del salón)
+-- para evitar problemas de zona horaria.
+CREATE TABLE IF NOT EXISTS appointments (
+  id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(id) ON DELETE SET NULL,
+  customer_name TEXT,
+  service_id INT REFERENCES products(id) ON DELETE SET NULL,
+  service_name TEXT,
+  staff_name TEXT,
+  day DATE NOT NULL,
+  start_time TIME NOT NULL,
+  duration_min INT NOT NULL DEFAULT 60,
+  status TEXT NOT NULL DEFAULT 'scheduled',
+  price NUMERIC(14,2),
+  notes TEXT,
+  sale_id INT REFERENCES sales(id) ON DELETE SET NULL,
+  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT appointments_status CHECK (status IN ('scheduled', 'done', 'cancelled', 'no_show')),
+  CONSTRAINT appointments_duration CHECK (duration_min > 0)
+);
+
+CREATE INDEX IF NOT EXISTS appointments_day_idx ON appointments (day, start_time);
+CREATE INDEX IF NOT EXISTS appointments_customer_idx ON appointments (customer_id, day DESC);
+
+-- Nombre por defecto pensado para el salón
+ALTER TABLE store_settings ALTER COLUMN name SET DEFAULT 'Mi salón'

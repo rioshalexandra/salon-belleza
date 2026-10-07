@@ -3,6 +3,10 @@ import { config } from '../config.js';
 
 const { Pool } = pg;
 
+// Las columnas DATE se devuelven como texto 'AAAA-MM-DD' (sin convertir a hora UTC),
+// así cumpleaños y turnos no se corren de día.
+pg.types.setTypeParser(1082, (value) => value);
+
 let pool;
 
 export function getPool() {

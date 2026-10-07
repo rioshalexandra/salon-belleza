@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  ArrowLeftRight,
   Boxes,
+  CalendarDays,
+  Scissors,
+  Sparkles,
   FileSpreadsheet,
   History,
   LayoutDashboard,
@@ -22,13 +24,16 @@ import { useStore } from '../store';
 import PoweredBy from './PoweredBy';
 import Sitemap from './Sitemap';
 
+// Menú lateral. Primero lo del día a día del salón, después la parte de stock y administración.
 export const NAV = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
+  { to: '/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/clientes', label: 'Clientes', icon: Users },
+  { to: '/ventas', label: 'Ventas', icon: ShoppingCart },
+  { to: '/servicios', label: 'Servicios', icon: Scissors },
   { to: '/productos', label: 'Productos', icon: Boxes },
   { to: '/movimientos', label: 'Movimientos', icon: History },
-  { to: '/clientes', label: 'Clientes', icon: Users },
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
-  { to: '/ventas', label: 'Ventas', icon: ShoppingCart },
   { to: '/compras', label: 'Compras', icon: PackagePlus },
   { to: '/pagos', label: 'Pagos', icon: Wallet },
   { to: '/precios', label: 'Precios', icon: Percent },
@@ -43,23 +48,21 @@ export default function Layout() {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <header className="flex min-h-14 items-center gap-1 border-b border-[#dadce0] px-2 sm:min-h-16">
+      <header className="flex min-h-14 items-center gap-1 border-b border-[#e7dfe1] px-2 sm:min-h-16">
         <button className="icon-btn lg:hidden" type="button" onClick={() => setOpen(true)} aria-label="Menú">
           <Menu size={22} />
         </button>
         <div className="flex min-w-0 items-center gap-2 pr-2">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#1a73e8] text-white sm:h-10 sm:w-10">
-            <ArrowLeftRight size={18} />
+          <div className="brand-mark grid h-8 w-8 shrink-0 place-items-center rounded-full text-white sm:h-10 sm:w-10">
+            <Sparkles size={18} />
           </div>
           <div className="min-w-0">
-            <div className="truncate text-lg text-[#5f6368] sm:text-xl">Gestión de stock</div>
-            <div className="hidden truncate text-xs text-[#70757a] sm:block">
-              {settings?.name || 'Comercio'}
-            </div>
+            <div className="brand-name truncate text-lg sm:text-xl">{settings?.name || 'Mi salón'}</div>
+            <div className="hidden truncate text-xs text-[#7a6f73] sm:block">Salón de belleza</div>
           </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <span className="hidden text-sm text-[#70757a] sm:block">{user?.name || user?.username}</span>
+          <span className="hidden text-sm text-[#7a6f73] sm:block">{user?.name || user?.username}</span>
           <button className="icon-btn" type="button" onClick={logout} title="Salir">
             <LogOut size={18} />
           </button>
@@ -84,7 +87,7 @@ export default function Layout() {
         </div>
       )}
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[240px] shrink-0 overflow-auto border-r border-[#dadce0] py-3 lg:block">
+        <aside className="hidden w-[240px] shrink-0 overflow-auto border-r border-[#e7dfe1] py-3 lg:block">
           <Nav />
         </aside>
         <main className="min-h-0 min-w-0 flex-1 overflow-hidden">
