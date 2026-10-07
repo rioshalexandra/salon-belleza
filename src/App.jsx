@@ -18,6 +18,7 @@ import SettingsPage from './pages/SettingsPage';
 import AgendaPage from './pages/AgendaPage';
 import CobrarPage from './pages/CobrarPage';
 import StaffPage from './pages/StaffPage';
+import PedidoPage from './pages/PedidoPage';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="agenda" element={<AgendaPage />} />
         <Route path="cobrar" element={<CobrarPage />} />
+        <Route path="pedido" element={<AdminOnly><PedidoPage /></AdminOnly>} />
         <Route path="empleados" element={<AdminOnly><StaffPage /></AdminOnly>} />
         {/* key distinta para que no se mezcle el estado entre servicios y productos */}
         <Route path="servicios" element={<AdminOnly><ProductsPage key="services" kind="services" /></AdminOnly>} />

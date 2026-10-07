@@ -309,3 +309,11 @@ ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS business_types TEXT[] NOT NU
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS nail_notes TEXT;
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS waxing_notes TEXT;
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS health_notes TEXT
+;
+
+-- ============================================================
+-- Pedido a proveedores: stock crítico individual (min_stock),
+-- cantidad sugerida para pedir y proveedor habitual de cada producto
+-- ============================================================
+ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_qty NUMERIC(14,3);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INT REFERENCES suppliers(id) ON DELETE SET NULL

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Boxes,
+  ClipboardList,
   CalendarDays,
   FileSpreadsheet,
   History,
@@ -34,6 +35,7 @@ export const NAV = [
   { to: '/ventas', label: 'Ventas', icon: Receipt, main: true },
   { to: '/servicios', label: 'Servicios', icon: Scissors, adminOnly: true },
   { to: '/productos', label: 'Productos', icon: Boxes, adminOnly: true },
+  { to: '/pedido', label: 'Pedido', icon: ClipboardList, adminOnly: true },
   { to: '/empleados', label: 'Empleados', icon: UserCog, adminOnly: true },
   { to: '/proveedores', label: 'Proveedores', icon: Truck, adminOnly: true },
   { to: '/compras', label: 'Compras', icon: PackagePlus, adminOnly: true },

@@ -181,7 +181,7 @@ export default function ProductsPage({ kind = 'products' }) {
                     <>
                       {qty(row.stock_qty)} {row.unit}
                       {Number(row.min_stock) > 0 && Number(row.stock_qty) <= Number(row.min_stock) && (
-                        <span className="badge badge-low ml-2">Reponer</span>
+                        <span className="badge badge-low ml-2">Stock crítico</span>
                       )}
                     </>
                   )}

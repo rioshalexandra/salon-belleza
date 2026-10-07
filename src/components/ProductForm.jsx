@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api';
 
 export default function ProductForm({ form, categories, onClose, onSave }) {
   const [state, setState] = useState(form);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
+
+  // Proveedores para elegir el habitual de cada producto (se usa en el Pedido)
+  useEffect(() => {
+    if (!form.isService) api.suppliers().then((res) => setSuppliers(res.data)).catch(() => {});
+  }, []);
 
   // Un servicio (corte, color…) no lleva stock, unidad ni código de barras; sí duración.
   const isService = Boolean(state.isService);
@@ -34,6 +41,8 @@ export default function ProductForm({ form, categories, onClose, onSave }) {
               stockQty: isService ? 0 : Number(state.stockQty || 0),
               minStock: isService ? 0 : Number(state.minStock || 0),
               isService,
+              reorderQty: isService ? null : Number(state.reorderQty || 0) || null,
+              supplierId: isService ? null : state.supplierId || null,
               durationMin: isService ? Number(state.durationMin || 0) || null : null,
               active: true,
             });
@@ -112,10 +121,47 @@ export default function ProductForm({ form, categories, onClose, onSave }) {
             </label>
           )}
           {!isService && (
-            <label className="field">
-              <span>Stock mínimo</span>
-              <input type="number" min="0" step="0.001" value={state.minStock} onChange={(e) => set('minStock', e.target.value)} />
-            </label>
+            <>
+              {/* Pedido: cuando el stock llega al crítico, el producto aparece en "Pedido" */}
+              <div className="mt-2 text-sm font-semibold sm:col-span-2">Reposición</div>
+              <label className="field">
+                <span>Stock crítico</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  value={state.minStock}
+                  placeholder="Ej: 3"
+                  onChange={(e) => set('minStock', e.target.value)}
+                />
+                <small className="text-xs text-[#6b6266]">Con esta cantidad o menos, pasa a la lista de pedido.</small>
+              </label>
+              <label className="field">
+                <span>Cantidad a pedir (opcional)</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  value={state.reorderQty}
+                  placeholder="Automática"
+                  onChange={(e) => set('reorderQty', e.target.value)}
+                />
+                <small className="text-xs text-[#6b6266]">Si la dejás vacía, se sugiere lo necesario para llegar al doble del crítico.</small>
+              </label>
+              <label className="field sm:col-span-2">
+                <span>Proveedor habitual</span>
+                <select value={state.supplierId} onChange={(e) => set('supplierId', e.target.value)}>
+                  <option value="">Sin proveedor</option>
+                  {suppliers.map((sup) => (
+                    <option key={sup.id} value={sup.id}>
+                      {sup.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
           )}
           <label className="field sm:col-span-2">
             <span>Descripción</span>
@@ -150,6 +196,8 @@ export function emptyProduct(isService = false) {
     salePrice: '',
     stockQty: '',
     minStock: '',
+    reorderQty: '',
+    supplierId: '',
   };
 }
 
@@ -167,6 +215,8 @@ export function toProductForm(row) {
     costPrice: row.cost_price || '',
     salePrice: row.sale_price || '',
     stockQty: row.stock_qty || '',
-    minStock: row.min_stock || '',
+    minStock: Number(row.min_stock) ? String(Number(row.min_stock)) : '',
+    reorderQty: row.reorder_qty ? String(Number(row.reorder_qty)) : '',
+    supplierId: row.supplier_id ? String(row.supplier_id) : '',
   };
 }

@@ -176,12 +176,17 @@ export default function DashboardPage() {
                       <Link key={row.id} to={`/productos/${row.id}`} className="list-row text-[#1c1a1b] no-underline">
                         <span>{row.name}</span>
                         <span className="badge badge-low">
-                          {qty(row.stock_qty)} / mín. {qty(row.min_stock)}
+                          {qty(row.stock_qty)} / crítico {qty(row.min_stock)}
                         </span>
                       </Link>
                     ))}
                     {!data.lowStock.length && <div className="list-empty">Todo el stock está en orden.</div>}
                   </div>
+                  {data.lowStock.length > 0 && (
+                    <Link className="pill-btn primary mt-3 inline-flex items-center no-underline" to="/pedido">
+                      Armar pedido
+                    </Link>
+                  )}
                 </section>
               )}
             </div>

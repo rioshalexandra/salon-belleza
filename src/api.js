@@ -99,6 +99,8 @@ export const api = {
   // Cobro en un solo paso (venta + confirmación + pago)
   quickSale: (body) => request('/api/sales/quick', { method: 'POST', body }),
   // Servicios sugeridos según los rubros elegidos
+  // Productos en stock crítico, para armar el pedido
+  reorderList: () => request('/api/products/reorder'),
   addSuggestedServices: () => request('/api/products/suggested', { method: 'POST', body: {} }),
   saveAppointment: (id, body) =>
     id

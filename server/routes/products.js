@@ -9,12 +9,13 @@ import { SUGGESTED_SERVICES } from '../lib/rubros.js';
 const router = Router();
 
 const PRODUCT_SELECT = `
-  SELECT p.*, c.name AS category_name,
+  SELECT p.*, c.name AS category_name, sup.name AS supplier_name,
          (SELECT a.id FROM attachments a
           WHERE a.entity_type = 'product' AND a.entity_id = p.id AND a.kind = 'photo'
           ORDER BY a.id LIMIT 1) AS photo_id
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id
+  LEFT JOIN suppliers sup ON sup.id = p.supplier_id
 `;
 
 router.get('/categories', async (_req, res, next) => {
@@ -74,6 +75,27 @@ router.post('/suggested', async (_req, res, next) => {
       }
     }
     res.json({ data: { added } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Lista para el pedido: productos con stock en o por debajo de su stock crítico.
+// Cantidad sugerida: la cargada en el producto, o lo necesario para llegar al doble del crítico.
+router.get('/reorder', async (_req, res, next) => {
+  try {
+    const result = await query(
+      `${PRODUCT_SELECT}
+       WHERE p.active = true AND p.is_service = false AND p.min_stock > 0 AND p.stock_qty <= p.min_stock
+       ORDER BY sup.name NULLS LAST, p.name`
+    );
+    const data = result.rows.map((row) => {
+      const stock = Number(row.stock_qty);
+      const critical = Number(row.min_stock);
+      const suggested = Number(row.reorder_qty) > 0 ? Number(row.reorder_qty) : Math.max(Math.ceil(critical * 2 - stock), 1);
+      return { ...row, suggested_qty: suggested };
+    });
+    res.json({ data });
   } catch (err) {
     next(err);
   }
@@ -215,14 +237,17 @@ async function createOrUpdateProduct(id, body = {}) {
     body.active !== false,
     isService,
     durationMin,
+    // Pedido: cantidad sugerida a pedir y proveedor habitual (solo productos)
+    isService || !(Number(body.reorderQty) > 0) ? null : qty(body.reorderQty),
+    isService ? null : body.supplierId ? Number(body.supplierId) : null,
   ];
   if (id) {
     const result = await query(
       `UPDATE products
        SET sku = $1, name = $2, description = $3, category_id = $4, unit = $5, barcode = $6,
            cost_price = $7, sale_price = $8, min_stock = $9, active = $10,
-           is_service = $11, duration_min = $12, updated_at = now()
-       WHERE id = $13
+           is_service = $11, duration_min = $12, reorder_qty = $13, supplier_id = $14, updated_at = now()
+       WHERE id = $15
        RETURNING *`,
       [...values, id]
     );
@@ -234,8 +259,8 @@ async function createOrUpdateProduct(id, body = {}) {
     const inserted = await client.query(
       `INSERT INTO products
          (sku, name, description, category_id, unit, barcode, cost_price, sale_price, stock_qty, min_stock, active,
-          is_service, duration_min)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12)
+          is_service, duration_min, reorder_qty, supplier_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12, $13, $14)
        RETURNING *`,
       values
     );
