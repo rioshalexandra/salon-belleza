@@ -88,3 +88,30 @@ export const APPOINTMENT_STATUSES = {
   cancelled: 'Cancelado',
   no_show: 'No vino',
 };
+
+// Rubros que puede trabajar el negocio
+export const BUSINESS_TYPES = {
+  peluqueria: 'Peluquería',
+  estetica: 'Estética',
+  unas: 'Uñas',
+  depilacion: 'Depilación',
+  kinesiologia: 'Kinesiología',
+  masajes: 'Masajes',
+};
+
+// Medios de pago que se ofrecen al cobrar (los más usados primero)
+export const QUICK_METHODS = [
+  ['cash', 'Efectivo'],
+  ['transfer', 'Transferencia'],
+  ['card', 'Tarjeta'],
+  ['other', 'Otro'],
+];
+
+// Link de WhatsApp con mensaje armado. Asume Argentina si el número no trae código de país.
+export function whatsappLink(phone, text = '') {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('0')) digits = digits.slice(1);
+  if (!digits.startsWith('54')) digits = `549${digits}`;
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}

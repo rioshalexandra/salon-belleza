@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { CUSTOMER_FIELDS, fieldsForRubros } from '../rubros';
+import { useStore } from '../store';
 
 // Formulario de cliente / proveedor.
-// Con kind="customers" se muestra además la ficha del salón (cumpleaños, cabello, piel, fórmula de color…).
+// Con kind="customers" se muestra además la ficha, con los campos de los rubros que trabaja el negocio.
 export default function PartyForm({ title, form, kind = 'customers', onClose, onSave }) {
+  const { settings } = useStore();
   const [state, setState] = useState(form);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [more, setMore] = useState(false); // datos poco usados (DNI, dirección) plegados para simplificar
   const isCustomer = kind === 'customers';
+  const rubroFields = fieldsForRubros(settings?.business_types);
 
   function set(key, value) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -29,7 +34,7 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
           }
         }}
       >
-        <div className="border-b border-[#e7dfe1] px-5 py-4 text-lg">{title}</div>
+        <div className="modal-head">{title}</div>
         <div className={`grid gap-3 px-5 py-4 ${isCustomer ? 'sm:grid-cols-2' : ''}`}>
           {error && (
             <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">{error}</div>
@@ -42,26 +47,7 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
           </label>
           <label className="field">
             <span>Teléfono / WhatsApp</span>
-            <input value={state.phone} onChange={(e) => set('phone', e.target.value)} />
-          </label>
-          {isCustomer ? (
-            <label className="field">
-              <span>Instagram</span>
-              <input
-                value={state.instagram}
-                placeholder="@usuario"
-                onChange={(e) => set('instagram', e.target.value)}
-              />
-            </label>
-          ) : (
-            <label className="field">
-              <span>CUIT / DNI</span>
-              <input value={state.taxId} onChange={(e) => set('taxId', e.target.value)} />
-            </label>
-          )}
-          <label className="field">
-            <span>Email</span>
-            <input value={state.email} onChange={(e) => set('email', e.target.value)} />
+            <input type="tel" inputMode="tel" value={state.phone} onChange={(e) => set('phone', e.target.value)} />
           </label>
           {isCustomer ? (
             <label className="field">
@@ -70,39 +56,46 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
             </label>
           ) : (
             <label className="field">
-              <span>Dirección</span>
-              <input value={state.address} onChange={(e) => set('address', e.target.value)} />
+              <span>CUIT / DNI</span>
+              <input value={state.taxId} onChange={(e) => set('taxId', e.target.value)} />
             </label>
           )}
+          {!isCustomer && (
+            <>
+              <label className="field">
+                <span>Email</span>
+                <input type="email" value={state.email} onChange={(e) => set('email', e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Dirección</span>
+                <input value={state.address} onChange={(e) => set('address', e.target.value)} />
+              </label>
+            </>
+          )}
 
-          {/* Ficha del salón: solo para clientes */}
+          {/* Ficha: campos según los rubros del negocio */}
           {isCustomer && (
             <>
-              <div className="mt-2 text-sm font-medium text-[#3a3034] sm:col-span-2">Ficha de belleza</div>
-              <label className="field">
-                <span>Tipo de cabello</span>
-                <input
-                  value={state.hairType}
-                  placeholder="Ej: rizado, fino, poroso, con canas"
-                  onChange={(e) => set('hairType', e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Tipo de piel</span>
-                <input
-                  value={state.skinType}
-                  placeholder="Ej: mixta, sensible, seca"
-                  onChange={(e) => set('skinType', e.target.value)}
-                />
-              </label>
-              <label className="field sm:col-span-2">
-                <span>Fórmula de color habitual</span>
-                <input
-                  value={state.colorFormula}
-                  placeholder="Ej: 7.1 + 7.0 (1:1) con oxidante 20 vol, 35 min"
-                  onChange={(e) => set('colorFormula', e.target.value)}
-                />
-              </label>
+              <div className="mt-2 text-sm font-semibold sm:col-span-2">Ficha</div>
+              {rubroFields.map((field) => (
+                <label key={field.key} className={`field ${field.wide ? 'sm:col-span-2' : ''}`}>
+                  <span>{field.label}</span>
+                  {field.textarea ? (
+                    <textarea
+                      rows={2}
+                      value={state[field.key]}
+                      placeholder={field.placeholder}
+                      onChange={(e) => set(field.key, e.target.value)}
+                    />
+                  ) : (
+                    <input
+                      value={state[field.key]}
+                      placeholder={field.placeholder}
+                      onChange={(e) => set(field.key, e.target.value)}
+                    />
+                  )}
+                </label>
+              ))}
               <label className="field">
                 <span>Alergias o sensibilidades</span>
                 <textarea
@@ -117,18 +110,34 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
                 <textarea
                   rows={2}
                   value={state.preferences}
-                  placeholder="Horarios, profesional favorita, estilo…"
+                  placeholder="Horarios, profesional favorito, estilo…"
                   onChange={(e) => set('preferences', e.target.value)}
                 />
               </label>
-              <label className="field">
-                <span>DNI / CUIT (para facturar)</span>
-                <input value={state.taxId} onChange={(e) => set('taxId', e.target.value)} />
-              </label>
-              <label className="field">
-                <span>Dirección</span>
-                <input value={state.address} onChange={(e) => set('address', e.target.value)} />
-              </label>
+              {!more ? (
+                <button type="button" className="link-btn self-start text-sm sm:col-span-2" onClick={() => setMore(true)}>
+                  + Más datos (Instagram, email, DNI, dirección)
+                </button>
+              ) : (
+                <>
+                  <label className="field">
+                    <span>Instagram</span>
+                    <input value={state.instagram} placeholder="@usuario" onChange={(e) => set('instagram', e.target.value)} />
+                  </label>
+                  <label className="field">
+                    <span>Email</span>
+                    <input type="email" value={state.email} onChange={(e) => set('email', e.target.value)} />
+                  </label>
+                  <label className="field">
+                    <span>DNI / CUIT (para facturar)</span>
+                    <input value={state.taxId} onChange={(e) => set('taxId', e.target.value)} />
+                  </label>
+                  <label className="field">
+                    <span>Dirección</span>
+                    <input value={state.address} onChange={(e) => set('address', e.target.value)} />
+                  </label>
+                </>
+              )}
             </>
           )}
 
@@ -137,7 +146,7 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
             <textarea rows={2} value={state.notes} onChange={(e) => set('notes', e.target.value)} />
           </label>
         </div>
-        <div className="flex justify-end gap-2 border-t border-[#e7dfe1] px-5 py-3">
+        <div className="modal-foot">
           <button type="button" className="pill-btn" onClick={onClose}>
             Cerrar
           </button>
@@ -151,7 +160,7 @@ export default function PartyForm({ title, form, kind = 'customers', onClose, on
 }
 
 export function emptyParty() {
-  return {
+  const base = {
     id: null,
     name: '',
     taxId: '',
@@ -159,19 +168,18 @@ export function emptyParty() {
     email: '',
     address: '',
     notes: '',
-    // ficha del salón
     birthday: '',
     instagram: '',
-    hairType: '',
-    skinType: '',
-    colorFormula: '',
     sensitivities: '',
     preferences: '',
   };
+  // Todos los campos de rubro arrancan vacíos (aunque no se muestren, para no perder datos)
+  for (const field of CUSTOMER_FIELDS) base[field.key] = '';
+  return base;
 }
 
 export function toPartyForm(row) {
-  return {
+  const form = {
     id: row.id,
     name: row.name || '',
     taxId: row.tax_id || '',
@@ -181,10 +189,9 @@ export function toPartyForm(row) {
     notes: row.notes || '',
     birthday: row.birthday ? String(row.birthday).slice(0, 10) : '',
     instagram: row.instagram || '',
-    hairType: row.hair_type || '',
-    skinType: row.skin_type || '',
-    colorFormula: row.color_formula || '',
     sensitivities: row.sensitivities || '',
     preferences: row.preferences || '',
   };
+  for (const field of CUSTOMER_FIELDS) form[field.key] = row[field.column] || '';
+  return form;
 }

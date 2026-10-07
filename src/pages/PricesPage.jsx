@@ -105,7 +105,7 @@ export default function PricesPage() {
         </button>
       </div>
       {!!preview.length && (
-        <div className="mb-8 overflow-x-auto rounded-xl border border-[#e7dfe1]">
+        <div className="mb-8 overflow-x-auto rounded-xl border border-[#eadfe2]">
           <table className="data-table">
             <thead>
               <tr>
@@ -133,7 +133,7 @@ export default function PricesPage() {
         </div>
       )}
       <h2 className="mb-3 text-lg font-medium">Historial</h2>
-      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
         <table className="data-table">
           <thead>
             <tr>
@@ -160,7 +160,7 @@ export default function PricesPage() {
             ))}
             {!history.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={5}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={5}>
                   Todavía no hay ajustes masivos.
                 </td>
               </tr>

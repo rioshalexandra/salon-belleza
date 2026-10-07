@@ -2,14 +2,18 @@ import { Router } from 'express';
 import { query, withTransaction } from '../db/pool.js';
 import { computeDocTotals, emptyToNull, httpError, money, nextNumber, qty } from '../lib/helpers.js';
 import { confirmSaleStock, deleteSaleRecord, refreshSalePaid, reverseSaleStock } from '../lib/stock.js';
+import { isAdmin, requireAdmin } from '../middleware/auth.js';
+
+const METHODS = ['cash', 'transfer', 'card', 'check', 'other'];
 
 const router = Router();
 
 const SALE_SELECT = `
-  SELECT s.*, c.name AS customer_name,
+  SELECT s.*, c.name AS customer_name, u.name AS staff_name,
          (s.total - s.paid) AS balance
   FROM sales s
   LEFT JOIN customers c ON c.id = s.customer_id
+  LEFT JOIN users u ON u.id = s.staff_id
 `;
 
 router.get('/', async (req, res, next) => {
@@ -19,6 +23,14 @@ router.get('/', async (req, res, next) => {
     if (req.query.q) {
       params.push(`%${String(req.query.q).trim()}%`);
       where.push(`(s.number ILIKE $${params.length} OR COALESCE(c.name, '') ILIKE $${params.length})`);
+    }
+    // Un empleado solo ve sus propias ventas
+    if (!isAdmin(req)) {
+      params.push(req.user.id);
+      where.push(`s.staff_id = $${params.length}`);
+    } else if (req.query.staffId) {
+      params.push(Number(req.query.staffId));
+      where.push(`s.staff_id = $${params.length}`);
     }
     if (req.query.status) {
       params.push(req.query.status);
@@ -40,6 +52,90 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// Cobro en un solo paso: arma la venta, la confirma (descuenta stock de productos),
+// registra el pago completo y, si viene de un turno, lo marca como realizado.
+// body: { customerId, staffId, items:[{productId, qty, unitPrice}], method, appointmentId, notes, issuedAt }
+router.post('/quick', async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const method = METHODS.includes(body.method) ? body.method : 'cash';
+    const saleId = await withTransaction(async (client) => {
+      let appt = null;
+      if (body.appointmentId) {
+        const found = await client.query('SELECT * FROM appointments WHERE id = $1 FOR UPDATE', [body.appointmentId]);
+        if (!found.rowCount) throw httpError(404, 'Turno no encontrado');
+        appt = found.rows[0];
+        if (appt.sale_id) throw httpError(400, 'Este turno ya está cobrado');
+      }
+      const sale = await saveSale(
+        client,
+        null,
+        {
+          customerId: body.customerId || appt?.customer_id || null,
+          staffId: body.staffId || appt?.staff_id || null,
+          issuedAt: body.issuedAt || (appt ? String(appt.day).slice(0, 10) : null),
+          notes: body.notes || (appt ? `Turno ${String(appt.start_time).slice(0, 5)}` : null),
+          items: body.items,
+        },
+        req.user
+      );
+      await confirmSaleStock(client, sale.id);
+      const current = await client.query(
+        `UPDATE sales SET status = 'confirmed', updated_at = now() WHERE id = $1 RETURNING *`,
+        [sale.id]
+      );
+      const total = money(current.rows[0].total);
+      if (total > 0) {
+        await client.query(
+          `INSERT INTO payments (kind, customer_id, sale_id, amount, method, paid_at, created_by)
+           VALUES ('in', $1, $2, $3, $4, $5, $6)`,
+          [current.rows[0].customer_id, sale.id, total, method, current.rows[0].issued_at, req.user?.id || null]
+        );
+        await refreshSalePaid(client, sale.id);
+      }
+      // Turno cobrado: queda realizado y vinculado a la venta
+      if (appt) {
+        await client.query(
+          `UPDATE appointments SET sale_id = $1, status = 'done', staff_id = COALESCE($3, staff_id), updated_at = now()
+           WHERE id = $2`,
+          [sale.id, appt.id, current.rows[0].staff_id]
+        );
+      }
+      // Los servicios cobrados quedan en el historial de visitas del cliente
+      const customerId = current.rows[0].customer_id;
+      if (customerId) {
+        const services = await client.query(
+          `SELECT i.description FROM sale_items i JOIN products p ON p.id = i.product_id
+           WHERE i.sale_id = $1 AND p.is_service = true ORDER BY i.id`,
+          [sale.id]
+        );
+        if (services.rowCount) {
+          const staffName = current.rows[0].staff_id
+            ? (await client.query('SELECT name FROM users WHERE id = $1', [current.rows[0].staff_id])).rows[0]?.name
+            : null;
+          await client.query(
+            `INSERT INTO customer_visits (customer_id, visited_at, service, staff_id, staff_name, notes, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              customerId,
+              current.rows[0].issued_at,
+              services.rows.map((row) => row.description).join(' + '),
+              current.rows[0].staff_id,
+              staffName,
+              appt?.notes || null,
+              req.user?.id || null,
+            ]
+          );
+        }
+      }
+      return sale.id;
+    });
+    res.status(201).json({ data: await loadSale(saleId) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:id', async (req, res, next) => {
   try {
     const sale = await loadSale(req.params.id);
@@ -52,7 +148,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const sale = await withTransaction((client) => saveSale(client, null, req.body, req.user?.id));
+    const sale = await withTransaction((client) => saveSale(client, null, req.body, req.user));
     res.status(201).json({ data: await loadSale(sale.id) });
   } catch (err) {
     next(err);
@@ -61,7 +157,7 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    await withTransaction((client) => saveSale(client, req.params.id, req.body, req.user?.id));
+    await withTransaction((client) => saveSale(client, req.params.id, req.body, req.user));
     res.json({ data: await loadSale(req.params.id) });
   } catch (err) {
     next(err);
@@ -101,7 +197,7 @@ router.post('/:id/cancel', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     await withTransaction((client) => deleteSaleRecord(client, req.params.id));
     res.json({ ok: true });
@@ -142,8 +238,10 @@ router.post('/:id/payments', async (req, res, next) => {
   }
 });
 
-async function saveSale(client, id, body, userId) {
+async function saveSale(client, id, body, user) {
+  const userId = user?.id;
   const items = await mapSaleItems(client, body.items || []);
+  const staff = await resolveStaff(client, body.staffId, user);
   if (!items.length) throw httpError(400, 'Agregá al menos un producto');
   const settings = await client.query('SELECT tax_rate FROM store_settings WHERE id = 1');
   const totals = computeDocTotals(items, body.taxRate ?? settings.rows[0]?.tax_rate);
@@ -153,7 +251,8 @@ async function saveSale(client, id, body, userId) {
     if (current.rows[0].status !== 'draft') throw httpError(400, 'Solo se editan borradores');
     await client.query(
       `UPDATE sales
-       SET customer_id = $1, issued_at = $2, notes = $3, subtotal = $4, tax = $5, total = $6, updated_at = now()
+       SET customer_id = $1, issued_at = $2, notes = $3, subtotal = $4, tax = $5, total = $6,
+           staff_id = $8, commission_pct = $9, updated_at = now()
        WHERE id = $7`,
       [
         body.customerId || null,
@@ -163,6 +262,8 @@ async function saveSale(client, id, body, userId) {
         totals.tax,
         totals.total,
         id,
+        staff.id,
+        staff.pct,
       ]
     );
     await client.query('DELETE FROM sale_items WHERE sale_id = $1', [id]);
@@ -171,8 +272,8 @@ async function saveSale(client, id, body, userId) {
   }
   const number = await nextNumber(client, 'sales', 'V');
   const inserted = await client.query(
-    `INSERT INTO sales (number, customer_id, issued_at, notes, subtotal, tax, total, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO sales (number, customer_id, issued_at, notes, subtotal, tax, total, created_by, staff_id, commission_pct)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
     [
       number,
@@ -183,6 +284,8 @@ async function saveSale(client, id, body, userId) {
       totals.tax,
       totals.total,
       userId || null,
+      staff.id,
+      staff.pct,
     ]
   );
   await insertSaleItems(client, inserted.rows[0].id, items);
@@ -235,3 +338,13 @@ async function loadSale(id) {
 }
 
 export default router;
+
+// Empleado de la venta y su % de comisión en ese momento.
+// Si no se indica, la venta queda a nombre de quien la carga.
+async function resolveStaff(client, staffId, user) {
+  const id = staffId ? Number(staffId) : user?.id || null;
+  if (!id) return { id: null, pct: 0 };
+  const result = await client.query('SELECT id, commission_pct FROM users WHERE id = $1', [id]);
+  if (!result.rowCount) throw httpError(400, 'Empleado inválido');
+  return { id: result.rows[0].id, pct: money(result.rows[0].commission_pct) };
+}

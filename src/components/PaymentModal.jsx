@@ -33,7 +33,7 @@ export default function PaymentModal({ title, remaining, onClose, onSave }) {
           }
         }}
       >
-        <div className="border-b border-[#e7dfe1] px-5 py-4 text-lg">{title}</div>
+        <div className="border-b border-[#eadfe2] px-5 py-4 text-lg">{title}</div>
         <div className="grid gap-3 px-5 py-4">
           {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
           <label className="field">
@@ -66,7 +66,7 @@ export default function PaymentModal({ title, remaining, onClose, onSave }) {
             <input value={state.notes} onChange={(e) => setState({ ...state, notes: e.target.value })} />
           </label>
         </div>
-        <div className="flex justify-end gap-2 border-t border-[#e7dfe1] px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[#eadfe2] px-5 py-3">
           <button type="button" className="pill-btn" onClick={onClose}>
             Cerrar
           </button>

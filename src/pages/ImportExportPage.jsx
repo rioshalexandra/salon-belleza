@@ -45,7 +45,7 @@ export default function ImportExportPage() {
   return (
     <div className="h-full overflow-auto p-4 sm:p-6">
       <h1 className="mb-2 text-2xl">Carga y descarga CSV / Excel</h1>
-      <p className="mb-6 max-w-2xl text-sm text-[#7a6f73]">
+      <p className="mb-6 max-w-2xl text-sm text-[#6b6266]">
         Descargá una plantilla, completala y volvé a subirla. También podés exportar el listado actual.
         Acepta `.csv`, `.xlsx` y `.xls`.
       </p>
@@ -53,9 +53,9 @@ export default function ImportExportPage() {
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <div className="grid gap-4">
         {BLOCKS.map((block) => (
-          <section key={block.entity} className="rounded-xl border border-[#e7dfe1] p-4">
+          <section key={block.entity} className="rounded-xl border border-[#eadfe2] p-4">
             <h2 className="mb-1 text-lg font-medium">{block.title}</h2>
-            <p className="mb-4 text-sm text-[#7a6f73]">{block.hint}</p>
+            <p className="mb-4 text-sm text-[#6b6266]">{block.hint}</p>
             <div className="flex flex-wrap gap-2">
               <button className="pill-btn" onClick={() => api.exportFile(block.entity, 'xlsx')}>
                 Descargar Excel
@@ -80,9 +80,9 @@ export default function ImportExportPage() {
             </div>
           </section>
         ))}
-        <section className="rounded-xl border border-[#e7dfe1] p-4">
+        <section className="rounded-xl border border-[#eadfe2] p-4">
           <h2 className="mb-1 text-lg font-medium">Historial de pagos</h2>
-          <p className="mb-4 text-sm text-[#7a6f73]">Solo descarga. Los pagos se cargan desde cada venta o compra.</p>
+          <p className="mb-4 text-sm text-[#6b6266]">Solo descarga. Los pagos se cargan desde cada venta o compra.</p>
           <div className="flex flex-wrap gap-2">
             <button className="pill-btn" onClick={() => api.exportFile('payments', 'xlsx')}>
               Descargar Excel

@@ -29,7 +29,7 @@ export default function ProductDetailPage() {
     load().catch((err) => setError(err.message));
   }, [id]);
 
-  if (!product) return <div className="p-6 text-[#7a6f73]">{error || 'Cargando…'}</div>;
+  if (!product) return <div className="p-6 text-[#6b6266]">{error || 'Cargando…'}</div>;
 
   // Los servicios comparten esta página pero sin stock ni movimientos
   const isService = Boolean(product.is_service);
@@ -39,11 +39,11 @@ export default function ProductDetailPage() {
     <div className="h-full overflow-auto p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <Link className="text-sm text-[#8e3b5f]" to={backPath}>
+          <Link className="text-sm text-[#7a5c1e]" to={backPath}>
             ← {isService ? 'Servicios' : 'Productos'}
           </Link>
           <h1 className="text-2xl">{product.name}</h1>
-          <div className="text-sm text-[#7a6f73]">
+          <div className="text-sm text-[#6b6266]">
             {product.sku} · {product.category_name || 'Sin categoría'}
           </div>
         </div>
@@ -93,11 +93,11 @@ export default function ProductDetailPage() {
       <>
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h2 className="mr-auto text-lg font-medium">Historial de stock</h2>
-        <Link className="text-sm text-[#8e3b5f]" to={`/movimientos?productId=${product.id}`}>
+        <Link className="text-sm text-[#7a5c1e]" to={`/movimientos?productId=${product.id}`}>
           Ver todos los movimientos
         </Link>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
         <table className="data-table">
           <thead>
             <tr>
@@ -120,7 +120,7 @@ export default function ProductDetailPage() {
             ))}
             {!product.movements?.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={4}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={4}>
                   Sin movimientos.
                 </td>
               </tr>

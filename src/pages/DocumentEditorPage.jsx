@@ -280,12 +280,12 @@ export default function DocumentEditorPage({ kind }) {
             />
           </label>
           {!!matches.length && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[#e7dfe1] bg-white shadow-lg">
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[#eadfe2] bg-white shadow-lg">
               {matches.map((product) => (
                 <button
                   key={product.id}
                   type="button"
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-[#f8e9ef]"
+                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-[#f7efe0]"
                   onMouseDown={(ev) => {
                     ev.preventDefault();
                     addProduct(product);
@@ -293,7 +293,7 @@ export default function DocumentEditorPage({ kind }) {
                 >
                   <span>
                     {product.name}
-                    <span className="ml-2 text-[#7a6f73]">{product.sku}</span>
+                    <span className="ml-2 text-[#6b6266]">{product.sku}</span>
                     {product.is_service && <span className="badge badge-in ml-2">Servicio</span>}
                   </span>
                   <span>{money(meta.defaultPrice(product), currency)}</span>
@@ -303,7 +303,7 @@ export default function DocumentEditorPage({ kind }) {
           )}
         </div>
       )}
-      <div className="mb-4 overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      <div className="mb-4 overflow-x-auto rounded-xl border border-[#eadfe2]">
         <table className="data-table">
           <thead>
             <tr>
@@ -319,12 +319,12 @@ export default function DocumentEditorPage({ kind }) {
               <tr key={item.productId}>
                 <td>
                   {item.name}
-                  <div className="text-xs text-[#7a6f73]">{item.sku}</div>
+                  <div className="text-xs text-[#6b6266]">{item.sku}</div>
                 </td>
                 <td>
                   {locked ? qty(item.qty) : (
                     <input
-                      className="w-24 rounded-lg border border-[#e7dfe1] px-2 py-1"
+                      className="w-24 rounded-lg border border-[#eadfe2] px-2 py-1"
                       type="number"
                       min="0.001"
                       step="0.001"
@@ -342,7 +342,7 @@ export default function DocumentEditorPage({ kind }) {
                     money(item.price, currency)
                   ) : (
                     <input
-                      className="w-28 rounded-lg border border-[#e7dfe1] px-2 py-1"
+                      className="w-28 rounded-lg border border-[#eadfe2] px-2 py-1"
                       type="number"
                       min="0"
                       step="0.01"
@@ -371,7 +371,7 @@ export default function DocumentEditorPage({ kind }) {
             ))}
             {!items.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={locked ? 4 : 5}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={locked ? 4 : 5}>
                   Agregá servicios o productos para armar el comprobante.
                 </td>
               </tr>
@@ -382,7 +382,7 @@ export default function DocumentEditorPage({ kind }) {
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <div className="text-lg font-semibold">Total {money(doc?.total ?? totals.total, currency)}</div>
         {doc?.status === 'confirmed' && (
-          <div className="text-sm text-[#7a6f73]">
+          <div className="text-sm text-[#6b6266]">
             Pagado {money(doc.paid, currency)} · Saldo {money(remaining, currency)}
           </div>
         )}
@@ -447,7 +447,7 @@ export default function DocumentEditorPage({ kind }) {
       {!!doc?.payments?.length && (
         <section>
           <h2 className="mb-3 text-lg font-medium">Pagos de este comprobante</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+          <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
             <table className="data-table">
               <thead>
                 <tr>

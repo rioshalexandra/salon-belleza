@@ -13,7 +13,8 @@ export async function login(username, password) {
     throw err;
   }
   const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) {
+  // Un empleado dado de baja no puede entrar más
+  if (!ok || user.active === false) {
     const err = new Error('Usuario o contraseña inválidos');
     err.status = 401;
     throw err;
@@ -41,7 +42,7 @@ export async function userFromToken(token) {
       SELECT u.*
       FROM sessions s
       JOIN users u ON u.id = s.user_id
-      WHERE s.token = $1 AND s.expires_at > now()
+      WHERE s.token = $1 AND s.expires_at > now() AND u.active = true
     `,
     [token]
   );
@@ -53,6 +54,9 @@ export function publicUser(user) {
     id: user.id,
     username: user.username,
     name: user.name,
+    role: user.role || 'admin',
+    commissionPct: Number(user.commission_pct || 0),
+    color: user.color || null,
   };
 }
 
@@ -75,4 +79,16 @@ export async function requireAuth(req, res, next) {
 export function readToken(req) {
   const header = req.headers.authorization || '';
   return header.startsWith('Bearer ') ? header.slice(7) : null;
+}
+
+// Solo para administración: configuración, empleados, compras, proveedores, etc.
+export function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Esta acción es solo para administración' });
+  }
+  next();
+}
+
+export function isAdmin(req) {
+  return req.user?.role === 'admin';
 }

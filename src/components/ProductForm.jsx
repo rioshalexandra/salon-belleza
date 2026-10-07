@@ -43,7 +43,7 @@ export default function ProductForm({ form, categories, onClose, onSave }) {
           }
         }}
       >
-        <div className="border-b border-[#e7dfe1] px-5 py-4 text-lg">
+        <div className="border-b border-[#eadfe2] px-5 py-4 text-lg">
           {state.id
             ? isService
               ? 'Editar servicio'
@@ -55,8 +55,8 @@ export default function ProductForm({ form, categories, onClose, onSave }) {
         <div className="grid gap-3 px-5 py-4 sm:grid-cols-2">
           {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">{error}</div>}
           <label className="field">
-            <span>Código</span>
-            <input value={state.sku} onChange={(e) => set('sku', e.target.value)} required />
+            <span>Código (opcional)</span>
+            <input value={state.sku} placeholder="Se genera solo" onChange={(e) => set('sku', e.target.value)} />
           </label>
           <label className="field">
             <span>Nombre</span>
@@ -122,7 +122,7 @@ export default function ProductForm({ form, categories, onClose, onSave }) {
             <textarea rows={2} value={state.description} onChange={(e) => set('description', e.target.value)} />
           </label>
         </div>
-        <div className="flex justify-end gap-2 border-t border-[#e7dfe1] px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[#eadfe2] px-5 py-3">
           <button type="button" className="pill-btn" onClick={onClose}>
             Cerrar
           </button>

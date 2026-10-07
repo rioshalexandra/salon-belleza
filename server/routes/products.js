@@ -4,6 +4,7 @@ import { emptyToNull, httpError, money, qty } from '../lib/helpers.js';
 import { applyStock } from '../lib/stock.js';
 import { listAttachments, pullAttachments } from '../lib/attachments.js';
 import { removeStoredFile } from '../lib/storage.js';
+import { SUGGESTED_SERVICES } from '../lib/rubros.js';
 
 const router = Router();
 
@@ -40,6 +41,39 @@ router.delete('/categories/:id', async (req, res, next) => {
   try {
     await query('DELETE FROM categories WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Carga los servicios sugeridos de los rubros elegidos en Configuración.
+// No duplica: si un código ya existe, lo saltea.
+router.post('/suggested', async (_req, res, next) => {
+  try {
+    const settings = await query('SELECT business_types FROM store_settings WHERE id = 1');
+    const types = settings.rows[0]?.business_types || [];
+    let added = 0;
+    for (const type of types) {
+      const rubro = SUGGESTED_SERVICES[type];
+      if (!rubro) continue;
+      const cat = await query(
+        `INSERT INTO categories (name) VALUES ($1)
+         ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [rubro.category]
+      );
+      for (const [sku, name, price, duration] of rubro.services) {
+        const result = await query(
+          `INSERT INTO products (sku, name, category_id, unit, sale_price, is_service, duration_min)
+           VALUES ($1, $2, $3, 'servicio', $4, true, $5)
+           ON CONFLICT (sku) DO NOTHING
+           RETURNING id`,
+          [sku, name, cat.rows[0].id, price, duration]
+        );
+        added += result.rowCount;
+      }
+    }
+    res.json({ data: { added } });
   } catch (err) {
     next(err);
   }
@@ -161,9 +195,10 @@ router.post('/:id/adjust-stock', async (req, res, next) => {
 });
 
 async function createOrUpdateProduct(id, body = {}) {
-  const sku = String(body.sku || '').trim();
   const name = String(body.name || '').trim();
-  if (!sku || !name) throw httpError(400, 'Código y nombre son obligatorios');
+  if (!name) throw httpError(400, 'El nombre es obligatorio');
+  // Si no se carga un código, se genera uno automático a partir del nombre
+  const sku = String(body.sku || '').trim() || (await autoSku(name, body.isService));
   // Un servicio (corte, color, manicura…) no maneja stock ni stock mínimo.
   const isService = body.isService === true || body.isService === 'true';
   const durationMin = isService && Number(body.durationMin) > 0 ? Math.round(Number(body.durationMin)) : null;
@@ -221,3 +256,22 @@ async function createOrUpdateProduct(id, body = {}) {
 }
 
 export default router;
+
+// Genera un código único tipo "SRV-CORTE-Y-PEINADO" o "PRD-SHAMPOO"
+async function autoSku(name, isService) {
+  const base =
+    (isService ? 'SRV-' : 'PRD-') +
+    name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 24);
+  let sku = base;
+  for (let i = 2; ; i += 1) {
+    const exists = await query('SELECT 1 FROM products WHERE sku = $1', [sku]);
+    if (!exists.rowCount) return sku;
+    sku = `${base}-${i}`;
+  }
+}

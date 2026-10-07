@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { APPOINTMENT_STATUSES } from '../format';
 
 // Formulario para dar o editar un turno.
-// customers y services vienen cargados desde la página de agenda.
-export default function AppointmentForm({ form, customers, services, staffNames, onClose, onSave, onDelete }) {
+// customers, services y staff vienen cargados desde la página de agenda.
+export default function AppointmentForm({ form, customers, services, staff, onClose, onSave, onDelete }) {
   const [state, setState] = useState(form);
   const [error, setError] = useState('');
+  const [overlap, setOverlap] = useState(false);
   const [busy, setBusy] = useState(false);
   // Si no hay cliente elegido pero sí nombre escrito, es un cliente "de paso" sin ficha
   const [walkIn, setWalkIn] = useState(!form.customerId && Boolean(form.customerName));
 
   function set(key, value) {
     setState((prev) => ({ ...prev, [key]: value }));
+    setOverlap(false);
   }
 
   // Al elegir un servicio completamos duración y precio sugeridos
@@ -25,30 +27,45 @@ export default function AppointmentForm({ form, customers, services, staffNames,
     }));
   }
 
+  async function save(allowOverlap = false) {
+    setBusy(true);
+    setError('');
+    try {
+      await onSave({
+        ...state,
+        customerId: walkIn ? null : state.customerId || null,
+        customerName: walkIn ? state.customerName : null,
+        allowOverlap,
+      });
+    } catch (err) {
+      setError(err.message);
+      setOverlap(Boolean(err.overlap));
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <form
         className="modal-card"
         onClick={(ev) => ev.stopPropagation()}
-        onSubmit={async (ev) => {
+        onSubmit={(ev) => {
           ev.preventDefault();
-          setBusy(true);
-          setError('');
-          try {
-            await onSave({
-              ...state,
-              customerId: walkIn ? null : state.customerId || null,
-              customerName: walkIn ? state.customerName : null,
-            });
-          } catch (err) {
-            setError(err.message);
-            setBusy(false);
-          }
+          save(false);
         }}
       >
-        <div className="border-b border-[#e7dfe1] px-5 py-4 text-lg">{state.id ? 'Editar turno' : 'Nuevo turno'}</div>
+        <div className="modal-head">{state.id ? 'Editar turno' : 'Nuevo turno'}</div>
         <div className="grid grid-cols-2 gap-3 px-5 py-4">
-          {error && <div className="col-span-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {error && (
+            <div className="col-span-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+              {overlap && (
+                <button type="button" className="ml-2 font-semibold underline" onClick={() => save(true)}>
+                  Guardar igual
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="field col-span-2">
             <span>Cliente</span>
@@ -70,11 +87,7 @@ export default function AppointmentForm({ form, customers, services, staffNames,
                 ))}
               </select>
             )}
-            <button
-              type="button"
-              className="self-start text-xs text-[#8e3b5f]"
-              onClick={() => setWalkIn((prev) => !prev)}
-            >
+            <button type="button" className="link-btn self-start text-xs" onClick={() => setWalkIn((prev) => !prev)}>
               {walkIn ? 'Elegir de mis clientes' : '¿No está en la lista? Escribir solo el nombre'}
             </button>
           </div>
@@ -86,6 +99,18 @@ export default function AppointmentForm({ form, customers, services, staffNames,
               {services.map((svc) => (
                 <option key={svc.id} value={svc.id}>
                   {svc.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field col-span-2">
+            <span>Atiende</span>
+            <select value={state.staffId} onChange={(e) => set('staffId', e.target.value)}>
+              <option value="">Sin asignar</option>
+              {staff.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </select>
@@ -103,6 +128,7 @@ export default function AppointmentForm({ form, customers, services, staffNames,
             <span>Duración (min)</span>
             <input
               type="number"
+              inputMode="numeric"
               min="5"
               step="5"
               value={state.durationMin}
@@ -111,19 +137,17 @@ export default function AppointmentForm({ form, customers, services, staffNames,
           </label>
           <label className="field">
             <span>Precio</span>
-            <input type="number" min="0" step="0.01" value={state.price} onChange={(e) => set('price', e.target.value)} />
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={state.price}
+              onChange={(e) => set('price', e.target.value)}
+            />
           </label>
-          <label className="field">
-            <span>Profesional</span>
-            <input list="staff-names" value={state.staffName} onChange={(e) => set('staffName', e.target.value)} />
-            <datalist id="staff-names">
-              {staffNames.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
-          </label>
-          {state.id ? (
-            <label className="field">
+          {state.id && (
+            <label className="field col-span-2">
               <span>Estado</span>
               <select value={state.status} onChange={(e) => set('status', e.target.value)}>
                 {Object.entries(APPOINTMENT_STATUSES).map(([value, label]) => (
@@ -133,15 +157,13 @@ export default function AppointmentForm({ form, customers, services, staffNames,
                 ))}
               </select>
             </label>
-          ) : (
-            <div />
           )}
           <label className="field col-span-2">
             <span>Notas</span>
             <textarea rows={2} value={state.notes} onChange={(e) => set('notes', e.target.value)} />
           </label>
         </div>
-        <div className="flex gap-2 border-t border-[#e7dfe1] px-5 py-3">
+        <div className="modal-foot">
           {state.id && onDelete && (
             <button type="button" className="pill-btn danger mr-auto" onClick={onDelete}>
               Borrar
@@ -159,13 +181,13 @@ export default function AppointmentForm({ form, customers, services, staffNames,
   );
 }
 
-export function emptyAppointment(day, customerId = '') {
+export function emptyAppointment(day, customerId = '', staffId = '') {
   return {
     id: null,
     customerId: customerId ? String(customerId) : '',
     customerName: '',
     serviceId: '',
-    staffName: '',
+    staffId: staffId ? String(staffId) : '',
     day,
     startTime: '10:00',
     durationMin: '60',
@@ -181,7 +203,7 @@ export function toAppointmentForm(row) {
     customerId: row.customer_id ? String(row.customer_id) : '',
     customerName: row.customer_id ? '' : row.customer_name || '',
     serviceId: row.service_id ? String(row.service_id) : '',
-    staffName: row.staff_name || '',
+    staffId: row.staff_id ? String(row.staff_id) : '',
     day: String(row.day).slice(0, 10),
     startTime: String(row.start_time).slice(0, 5),
     durationMin: String(row.duration_min || 60),

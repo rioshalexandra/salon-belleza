@@ -10,14 +10,15 @@ El staff entra con usuario y contraseña. Con `SEED_DEMO=true` y la base vacía,
 
 | Área | Qué incluye |
 |------|-------------|
-| **Inicio** | Turnos de hoy, ventas del mes, cumpleaños del mes y productos para reponer |
-| **Agenda** | Turnos por día con vista semanal, profesional, estado (pendiente, realizado, no vino, cancelado) y botón **Cobrar** que arma la venta |
-| **Clientes** | Ficha de belleza (cumpleaños, Instagram, tipo de cabello y piel, fórmula de color, alergias, preferencias), historial de visitas, turnos y saldo |
-| **Servicios** | Corte, color, manicura… con precio, costo de insumos y duración. No manejan stock |
-| **Productos** | Productos de reventa con código, categoría, costo, precio, stock y mínimo |
-| **Ventas** | Servicios y productos en el mismo comprobante; al confirmar solo descuenta stock de productos |
-| **Proveedores y compras** | Compras que ingresan stock y actualizan costo, pagos al proveedor |
-| **Precios, pagos, CSV / Excel, configuración** | Igual que el template original |
+| **Inicio** | Una tarjeta por empleado (turnos de hoy, facturado del día y del mes, comisión), caja del día por medio de pago, cumpleaños con saludo por WhatsApp y productos para reponer |
+| **Agenda** | Turnos por día y semana, filtro por empleado, aviso de superposición, recordatorio por WhatsApp y botón **Cobrar** |
+| **Cobrar** | Cobro en un solo paso: servicios y productos, quién atendió y medio de pago. Confirma la venta, descuenta stock y registra el pago |
+| **Clientes** | Ficha según los rubros del negocio (peluquería, estética, uñas, depilación, kinesiología, masajes), alergias, historial de visitas y turnos |
+| **Empleados** | Cada uno con usuario, color y % de comisión. Rol *Empleado* (su agenda, clientes, cobros y comisión) o *Administración* (todo) |
+| **Servicios y productos** | Catálogo con duración; servicios sugeridos por rubro con un botón; productos de reventa con stock |
+| **Administración** | Proveedores, compras, movimientos de stock, precios, pagos, CSV / Excel y configuración (solo administración) |
+
+Pensada para usarse desde el celular: barra inferior, botón flotante para dar turnos y se puede instalar en la pantalla de inicio.
 
 ## Stack
 

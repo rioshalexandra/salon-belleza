@@ -74,13 +74,13 @@ export default function ProductsPage({ kind = 'products' }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="mr-auto text-2xl">{meta.title}</h1>
         <input
-          className="h-9 w-full min-w-0 rounded-full border border-[#e7dfe1] px-4 text-sm outline-none focus:border-[#8e3b5f] sm:w-auto sm:min-w-[220px]"
+          className="h-9 w-full min-w-0 rounded-full border border-[#eadfe2] px-4 text-sm outline-none focus:border-[#7a5c1e] sm:w-auto sm:min-w-[220px]"
           placeholder={isServices ? 'Buscar servicio…' : 'Buscar nombre, código o código de barras…'}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <select
-          className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
+          className="h-9 rounded-full border border-[#eadfe2] px-3 text-sm"
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
         >
@@ -91,6 +91,27 @@ export default function ProductsPage({ kind = 'products' }) {
             </option>
           ))}
         </select>
+        {isServices && (
+          <button
+            className="pill-btn"
+            onClick={async () => {
+              try {
+                const res = await api.addSuggestedServices();
+                setError('');
+                alert(
+                  res.data.added
+                    ? `Se agregaron ${res.data.added} servicios. Revisá los precios y ajustalos a los tuyos.`
+                    : 'Ya tenés cargados los servicios sugeridos de tus rubros.'
+                );
+                await load();
+              } catch (err) {
+                setError(err.message);
+              }
+            }}
+          >
+            Cargar servicios sugeridos
+          </button>
+        )}
         <button className="pill-btn primary" onClick={() => setEditing(emptyProduct(isServices))}>
           {meta.newLabel}
         </button>
@@ -106,7 +127,7 @@ export default function ProductsPage({ kind = 'products' }) {
         }}
       >
         <input
-          className="h-9 rounded-full border border-[#e7dfe1] px-4 text-sm"
+          className="h-9 rounded-full border border-[#eadfe2] px-4 text-sm"
           placeholder="Nueva categoría"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
@@ -116,7 +137,7 @@ export default function ProductsPage({ kind = 'products' }) {
         </button>
       </form>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
         <table className="data-table">
           <thead>
             <tr>
@@ -137,18 +158,18 @@ export default function ProductsPage({ kind = 'products' }) {
                       <img
                         src={attachmentFileUrl(row.photo_id)}
                         alt=""
-                        className="h-11 w-11 shrink-0 rounded-lg border border-[#e7dfe1] object-cover"
+                        className="h-11 w-11 shrink-0 rounded-lg border border-[#eadfe2] object-cover"
                       />
                     ) : (
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-dashed border-[#e7dfe1] text-xs text-[#7a6f73]">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-dashed border-[#eadfe2] text-xs text-[#6b6266]">
                         Foto
                       </div>
                     )}
                     <div>
-                      <Link className="font-medium text-[#8e3b5f]" to={`${meta.path}/${row.id}`}>
+                      <Link className="font-medium text-[#7a5c1e]" to={`${meta.path}/${row.id}`}>
                         {row.name}
                       </Link>
-                      <div className="text-xs text-[#7a6f73]">{row.sku}</div>
+                      <div className="text-xs text-[#6b6266]">{row.sku}</div>
                     </div>
                   </div>
                 </td>
@@ -186,7 +207,7 @@ export default function ProductsPage({ kind = 'products' }) {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={6}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={6}>
                   {meta.empty}
                 </td>
               </tr>

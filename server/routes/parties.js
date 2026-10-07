@@ -12,6 +12,9 @@ const CUSTOMER_EXTRA = {
   colorFormula: 'color_formula',
   sensitivities: 'sensitivities',
   preferences: 'preferences',
+  nailNotes: 'nail_notes', // uñas
+  waxingNotes: 'waxing_notes', // depilación
+  healthNotes: 'health_notes', // kinesiología / masajes
 };
 
 export function partyRouter(table) {

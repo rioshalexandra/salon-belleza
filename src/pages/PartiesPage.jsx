@@ -5,6 +5,7 @@ import ConfirmDangerModal from '../components/ConfirmDangerModal';
 import PartyForm, { emptyParty, toPartyForm } from '../components/PartyForm';
 import { money, ymd } from '../format';
 import { useStore } from '../store';
+import { useAuth } from '../auth';
 
 const COPY = {
   customers: {
@@ -29,6 +30,7 @@ const COPY = {
 
 export default function PartiesPage({ kind }) {
   const meta = COPY[kind];
+  const { isAdmin } = useAuth();
   const { currency } = useStore();
   const [rows, setRows] = useState([]);
   const [q, setQ] = useState('');
@@ -55,7 +57,7 @@ export default function PartiesPage({ kind }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="mr-auto text-2xl">{meta.title}</h1>
         <input
-          className="h-9 w-full min-w-0 rounded-full border border-[#e7dfe1] px-4 text-sm outline-none focus:border-[#8e3b5f] sm:w-auto sm:min-w-[240px]"
+          className="h-9 w-full min-w-0 rounded-full border border-[#eadfe2] px-4 text-sm outline-none focus:border-[#7a5c1e] sm:w-auto sm:min-w-[240px]"
           placeholder={kind === 'customers' ? 'Buscar por nombre o teléfono…' : 'Buscar por nombre, CUIT o teléfono…'}
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -65,7 +67,23 @@ export default function PartiesPage({ kind }) {
         </button>
       </div>
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      {/* Celular: tarjetas simples que llevan a la ficha */}
+      <div className="grid gap-2 sm:hidden">
+        {rows.map((row) => (
+          <Link key={row.id} to={`${meta.path}/${row.id}`} className="card-tile flex items-center gap-3 no-underline">
+            <span className="avatar small">{row.name.slice(0, 1).toUpperCase()}</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium text-[#1c1a1b]">{row.name}</div>
+              <div className="truncate text-xs text-[#6b6266]">
+                {row.phone || 'Sin teléfono'}
+                {row.next_appointment && ` · turno ${ymd(row.next_appointment)}`}
+              </div>
+            </div>
+          </Link>
+        ))}
+        {!rows.length && <div className="list-empty">No hay registros.</div>}
+      </div>
+      <div className="hidden overflow-x-auto rounded-xl border border-[#eadfe2] bg-white sm:block">
         <table className="data-table">
           <thead>
             <tr>
@@ -90,7 +108,7 @@ export default function PartiesPage({ kind }) {
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>
-                  <Link className="font-medium text-[#8e3b5f]" to={`${meta.path}/${row.id}`}>
+                  <Link className="font-medium text-[#7a5c1e]" to={`${meta.path}/${row.id}`}>
                     {row.name}
                   </Link>
                 </td>
@@ -112,16 +130,18 @@ export default function PartiesPage({ kind }) {
                     <button className="pill-btn" onClick={() => setEditing(toPartyForm(row))}>
                       Editar
                     </button>
-                    <button className="pill-btn danger" onClick={() => setRemoving(row)}>
-                      Borrar
-                    </button>
+                    {isAdmin && (
+                      <button className="pill-btn danger" onClick={() => setRemoving(row)}>
+                        Borrar
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={kind === 'customers' ? 6 : 5}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={kind === 'customers' ? 6 : 5}>
                   No hay registros.
                 </td>
               </tr>

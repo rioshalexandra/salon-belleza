@@ -48,7 +48,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, isAuthenticated: Boolean(user), login, logout, refresh }),
+    () => ({
+      user,
+      loading,
+      isAuthenticated: Boolean(user),
+      // Administración ve todo; un empleado ve su agenda, clientes, cobros y comisiones
+      isAdmin: user?.role === 'admin',
+      login,
+      logout,
+      refresh,
+    }),
     [user, loading, login, logout, refresh]
   );
 

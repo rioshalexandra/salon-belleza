@@ -23,7 +23,12 @@ async function request(path, { method = 'GET', body } = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Error de red');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Error de red');
+    err.overlap = Boolean(data.overlap); // turno superpuesto: la pantalla puede preguntar si guardar igual
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -85,8 +90,16 @@ export const api = {
   deleteVisit: (customerId, visitId) =>
     request(`/api/customers/${customerId}/visits/${visitId}`, { method: 'DELETE' }),
   // Agenda de turnos
-  appointments: (from, to) => request(`/api/appointments?from=${from}&to=${to || from}`),
-  staffNames: () => request('/api/appointments/staff'),
+  appointments: (from, to, staffId) =>
+    request(`/api/appointments?from=${from}&to=${to || from}${staffId ? `&staffId=${staffId}` : ''}`),
+  // Empleados
+  staff: (all = false) => request(`/api/staff${all ? '?all=1' : ''}`),
+  saveStaff: (id, body) =>
+    id ? request(`/api/staff/${id}`, { method: 'PUT', body }) : request('/api/staff', { method: 'POST', body }),
+  // Cobro en un solo paso (venta + confirmación + pago)
+  quickSale: (body) => request('/api/sales/quick', { method: 'POST', body }),
+  // Servicios sugeridos según los rubros elegidos
+  addSuggestedServices: () => request('/api/products/suggested', { method: 'POST', body: {} }),
   saveAppointment: (id, body) =>
     id
       ? request(`/api/appointments/${id}`, { method: 'PUT', body })
@@ -94,7 +107,7 @@ export const api = {
   setAppointmentStatus: (id, status) =>
     request(`/api/appointments/${id}/status`, { method: 'POST', body: { status } }),
   deleteAppointment: (id) => request(`/api/appointments/${id}`, { method: 'DELETE' }),
-  checkoutAppointment: (id) => request(`/api/appointments/${id}/checkout`, { method: 'POST', body: {} }),
+
   suppliers: (params = '') => request(`/api/suppliers${params}`),
   supplier: (id) => request(`/api/suppliers/${id}`),
   saveSupplier: (id, body) =>

@@ -13,7 +13,7 @@ export default function ConfirmDangerModal({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(ev) => ev.stopPropagation()}>
-        <div className="border-b border-[#e7dfe1] px-5 py-4">
+        <div className="border-b border-[#eadfe2] px-5 py-4">
           <div className="text-lg text-[#c5221f]">{title}</div>
         </div>
         <div className="grid gap-3 px-5 py-4">
@@ -21,9 +21,9 @@ export default function ConfirmDangerModal({
           <div className="rounded-lg border border-[#f6aea9] bg-[#fce8e6] px-3 py-3 text-sm text-[#5f2120]">
             {message}
           </div>
-          <p className="text-sm text-[#7a6f73]">Esta acción no se puede deshacer.</p>
+          <p className="text-sm text-[#6b6266]">Esta acción no se puede deshacer.</p>
         </div>
-        <div className="flex justify-end gap-2 border-t border-[#e7dfe1] px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[#eadfe2] px-5 py-3">
           <button type="button" className="pill-btn" disabled={busy} onClick={onClose}>
             Cancelar
           </button>

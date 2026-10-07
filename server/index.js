@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { assertRuntimeConfig, config } from './config.js';
-import { requireAuth, userFromToken, readToken } from './middleware/auth.js';
+import { requireAdmin, requireAuth, userFromToken, readToken } from './middleware/auth.js';
 import authRouter from './routes/auth.js';
 import settingsRouter from './routes/settings.js';
 import dashboardRouter from './routes/dashboard.js';
@@ -18,6 +18,7 @@ import ioRouter from './routes/io.js';
 import attachmentsRouter from './routes/attachments.js';
 import movementsRouter from './routes/movements.js';
 import appointmentsRouter from './routes/appointments.js';
+import staffRouter from './routes/staff.js';
 import { ensureUploadDir } from './lib/storage.js';
 
 assertRuntimeConfig();
@@ -49,18 +50,26 @@ app.use('/api/auth', async (req, res, next) => {
   if (user) req.user = user;
   next();
 }, authRouter);
-app.use('/api/settings', requireAuth, settingsRouter);
+// Permite leer a todos los empleados, pero solo administración puede modificar
+const readAllWriteAdmin = (req, res, next) => (req.method === 'GET' ? next() : requireAdmin(req, res, next));
+// Los empleados pueden cargar y editar clientes, pero borrar es solo para administración
+const deleteAdmin = (req, res, next) => (req.method === 'DELETE' ? requireAdmin(req, res, next) : next());
+
+// Rutas que usan todos los empleados
+app.use('/api/settings', requireAuth, readAllWriteAdmin, settingsRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
-app.use('/api/products', requireAuth, productsRouter);
-app.use('/api/customers', requireAuth, partyRouter('customers'));
-app.use('/api/suppliers', requireAuth, partyRouter('suppliers'));
+app.use('/api/products', requireAuth, readAllWriteAdmin, productsRouter);
+app.use('/api/customers', requireAuth, deleteAdmin, partyRouter('customers'));
 app.use('/api/sales', requireAuth, salesRouter);
-app.use('/api/purchases', requireAuth, purchasesRouter);
-app.use('/api/payments', requireAuth, paymentsRouter);
-app.use('/api/prices', requireAuth, pricesRouter);
-app.use('/api/movements', requireAuth, movementsRouter);
 app.use('/api/appointments', requireAuth, appointmentsRouter);
-app.use('/api/io', requireAuth, ioRouter);
+app.use('/api/staff', requireAuth, staffRouter);
+// Rutas solo para administración
+app.use('/api/suppliers', requireAuth, requireAdmin, partyRouter('suppliers'));
+app.use('/api/purchases', requireAuth, requireAdmin, purchasesRouter);
+app.use('/api/payments', requireAuth, requireAdmin, paymentsRouter);
+app.use('/api/prices', requireAuth, requireAdmin, pricesRouter);
+app.use('/api/movements', requireAuth, requireAdmin, movementsRouter);
+app.use('/api/io', requireAuth, requireAdmin, ioRouter);
 app.use('/api/attachments', (req, res, next) => {
   if (req.method === 'GET') return next();
   return requireAuth(req, res, next);
@@ -93,7 +102,8 @@ app.use((err, _req, res, _next) => {
     status = 400;
     message = 'El archivo supera los 12 MB';
   }
-  res.status(status).json({ error: message });
+  // overlap: el turno se superpone con otro del mismo empleado (la app pregunta si guardarlo igual)
+  res.status(status).json({ error: message, ...(err.overlap ? { overlap: true } : {}) });
 });
 
 app.listen(config.port, () => {

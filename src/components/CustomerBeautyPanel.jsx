@@ -1,30 +1,40 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarPlus, Trash2 } from 'lucide-react';
+import { CalendarPlus, MessageCircle, Trash2 } from 'lucide-react';
 import { api } from '../api';
-import { APPOINTMENT_STATUSES, birthdayLabel, today, ymd } from '../format';
+import { APPOINTMENT_STATUSES, birthdayLabel, today, whatsappLink, ymd } from '../format';
+import { fieldsForRubros } from '../rubros';
+import { useStore } from '../store';
 
 // Panel de la ficha de un cliente: datos de belleza, historial de visitas y turnos.
 export default function CustomerBeautyPanel({ party, onChanged }) {
+  const { settings } = useStore();
+  // Datos de la ficha: los fijos + los de los rubros que trabaja el negocio
   const facts = [
     ['Cumpleaños', party.birthday ? birthdayLabel(party.birthday) : null],
-    ['Instagram', party.instagram],
-    ['Tipo de cabello', party.hair_type],
-    ['Tipo de piel', party.skin_type],
-    ['Fórmula de color', party.color_formula],
+    ...fieldsForRubros(settings?.business_types).map((field) => [field.label, party[field.column]]),
     ['Preferencias', party.preferences],
+    ['Instagram', party.instagram],
   ];
+  const wa = whatsappLink(party.phone);
 
   return (
     <div className="mb-6 grid gap-6 xl:grid-cols-2">
       <section>
-        <h2 className="mb-3 text-lg font-medium">Ficha de belleza</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-medium">Ficha</h2>
+          {wa && (
+            <a className="pill-btn inline-flex items-center gap-1 no-underline" href={wa} target="_blank" rel="noreferrer">
+              <MessageCircle size={15} /> WhatsApp
+            </a>
+          )}
+        </div>
         {party.sensitivities && (
           <div className="mb-3 rounded-xl border border-[#f6aea9] bg-[#fce8e6] px-4 py-3 text-sm text-[#a50e0e]">
             <strong>Alergias / sensibilidades:</strong> {party.sensitivities}
           </div>
         )}
-        <dl className="grid gap-x-4 gap-y-3 rounded-xl border border-[#e7dfe1] p-4 sm:grid-cols-2">
+        <dl className="grid gap-x-4 gap-y-3 rounded-xl border border-[#eadfe2] p-4 sm:grid-cols-2">
           {facts.map(([label, value]) => (
             <div key={label}>
               <dt className="kpi-label">{label}</dt>
@@ -53,7 +63,7 @@ function AppointmentsList({ party }) {
           <CalendarPlus size={16} /> Dar turno
         </Link>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+      <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
         <table className="data-table">
           <thead>
             <tr>
@@ -67,7 +77,7 @@ function AppointmentsList({ party }) {
             {[...upcoming, ...rows.filter((row) => !upcoming.includes(row)).slice(0, 8)].map((row) => (
               <tr key={row.id}>
                 <td>
-                  <Link className="text-[#8e3b5f]" to={`/agenda?dia=${ymd(row.day)}`}>
+                  <Link className="text-[#7a5c1e]" to={`/agenda?dia=${ymd(row.day)}`}>
                     {ymd(row.day)}
                   </Link>
                 </td>
@@ -80,7 +90,7 @@ function AppointmentsList({ party }) {
             ))}
             {!rows.length && (
               <tr>
-                <td className="py-8 text-center text-[#7a6f73]" colSpan={4}>
+                <td className="py-8 text-center text-[#6b6266]" colSpan={4}>
                   Sin turnos.
                 </td>
               </tr>
@@ -116,7 +126,7 @@ function VisitsSection({ party, onChanged }) {
       </div>
       {open && (
         <form
-          className="mb-4 grid gap-3 rounded-xl border border-[#e7dfe1] p-4 sm:grid-cols-2"
+          className="mb-4 grid gap-3 rounded-xl border border-[#eadfe2] p-4 sm:grid-cols-2"
           onSubmit={async (ev) => {
             ev.preventDefault();
             setError('');
@@ -172,13 +182,13 @@ function VisitsSection({ party, onChanged }) {
           <li key={visit.id}>
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <div className="text-xs text-[#7a6f73]">
+                <div className="text-xs text-[#6b6266]">
                   {ymd(visit.visited_at)}
                   {visit.staff_name && ` · ${visit.staff_name}`}
                 </div>
                 <div className="font-medium">{visit.service}</div>
-                {visit.formula && <div className="text-sm text-[#655a5e]">Fórmula: {visit.formula}</div>}
-                {visit.notes && <div className="text-sm text-[#655a5e]">{visit.notes}</div>}
+                {visit.formula && <div className="text-sm text-[#5a5155]">Fórmula: {visit.formula}</div>}
+                {visit.notes && <div className="text-sm text-[#5a5155]">{visit.notes}</div>}
               </div>
               <button
                 className="icon-btn h-8 w-8 text-[#a39a9d]"
@@ -194,7 +204,7 @@ function VisitsSection({ party, onChanged }) {
             </div>
           </li>
         ))}
-        {!visits.length && <li className="text-sm text-[#7a6f73]">Todavía no hay visitas anotadas.</li>}
+        {!visits.length && <li className="text-sm text-[#6b6266]">Todavía no hay visitas anotadas.</li>}
       </ol>
     </section>
   );

@@ -27,16 +27,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#fbf7f8]">
+    <div className="flex min-h-full flex-col bg-[#fbf3f5]">
       <div className="grid flex-1 place-items-center p-4">
-        <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e7dfe1] sm:p-8">
+        <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#eadfe2] sm:p-8">
           <div className="mb-6 flex items-center gap-3">
             <div className="brand-mark grid h-11 w-11 shrink-0 place-items-center rounded-full text-white">
               <Sparkles size={20} />
             </div>
             <div>
               <h1 className="m-0 text-2xl">Salón de belleza</h1>
-              <div className="text-sm text-[#7a6f73]">Agenda, clientes, servicios y productos</div>
+              <div className="text-sm text-[#6b6266]">Agenda, clientes, servicios y productos</div>
             </div>
           </div>
           {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
@@ -55,7 +55,7 @@ export default function LoginPage() {
           </label>
           <button
             type="submit"
-            className="h-11 w-full rounded-full bg-[#8e3b5f] font-medium text-white disabled:opacity-60"
+            className="h-11 w-full rounded-full bg-[#7a5c1e] font-medium text-white disabled:opacity-60"
             disabled={busy}
           >
             Ingresar

@@ -7,6 +7,7 @@ import PartyForm, { toPartyForm } from '../components/PartyForm';
 import StatusBadge from '../components/StatusBadge';
 import { METHODS, money, ymd } from '../format';
 import { useStore } from '../store';
+import { useAuth } from '../auth';
 
 const COPY = {
   customers: {
@@ -35,6 +36,7 @@ const COPY = {
 
 export default function PartyDetailPage({ kind }) {
   const meta = COPY[kind];
+  const { isAdmin } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const { currency } = useStore();
@@ -52,17 +54,17 @@ export default function PartyDetailPage({ kind }) {
     load().catch((err) => setError(err.message));
   }, [id, kind]);
 
-  if (!party) return <div className="p-6 text-[#7a6f73]">{error || 'Cargando…'}</div>;
+  if (!party) return <div className="p-6 text-[#6b6266]">{error || 'Cargando…'}</div>;
 
   return (
     <div className="h-full overflow-auto p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <Link className="text-sm text-[#8e3b5f]" to={meta.back}>
+          <Link className="text-sm text-[#7a5c1e]" to={meta.back}>
             ← {meta.listLabel}
           </Link>
           <h1 className="text-2xl">{party.name}</h1>
-          <div className="text-sm text-[#7a6f73]">
+          <div className="text-sm text-[#6b6266]">
             {kind === 'customers'
               ? [party.phone || 'Sin teléfono', party.email].filter(Boolean).join(' · ')
               : `${party.tax_id || 'Sin CUIT'} · ${party.phone || 'Sin teléfono'}`}
@@ -71,9 +73,11 @@ export default function PartyDetailPage({ kind }) {
         <button className="pill-btn" onClick={() => setEditing(true)}>
           Editar
         </button>
-        <button className="pill-btn danger" onClick={() => setRemoving(true)}>
-          Borrar
-        </button>
+        {isAdmin && (
+          <button className="pill-btn danger" onClick={() => setRemoving(true)}>
+            Borrar
+          </button>
+        )}
       </div>
       <div className="mb-6 kpi-card max-w-xs">
         <div className="kpi-label">Saldo</div>
@@ -83,7 +87,7 @@ export default function PartyDetailPage({ kind }) {
       <div className="grid gap-6 xl:grid-cols-2">
         <section>
           <h2 className="mb-3 text-lg font-medium">{meta.partyLabel}</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+          <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
             <table className="data-table">
               <thead>
                 <tr>
@@ -97,7 +101,7 @@ export default function PartyDetailPage({ kind }) {
                 {(party.documents || []).map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <Link className="text-[#8e3b5f]" to={`${meta.docs}/${row.id}`}>
+                      <Link className="text-[#7a5c1e]" to={`${meta.docs}/${row.id}`}>
                         {row.number}
                       </Link>
                     </td>
@@ -110,7 +114,7 @@ export default function PartyDetailPage({ kind }) {
                 ))}
                 {!party.documents?.length && (
                   <tr>
-                    <td className="py-8 text-center text-[#7a6f73]" colSpan={4}>
+                    <td className="py-8 text-center text-[#6b6266]" colSpan={4}>
                       Sin comprobantes.
                     </td>
                   </tr>
@@ -121,7 +125,7 @@ export default function PartyDetailPage({ kind }) {
         </section>
         <section>
           <h2 className="mb-3 text-lg font-medium">Pagos</h2>
-          <div className="overflow-x-auto rounded-xl border border-[#e7dfe1]">
+          <div className="overflow-x-auto rounded-xl border border-[#eadfe2]">
             <table className="data-table">
               <thead>
                 <tr>
@@ -140,7 +144,7 @@ export default function PartyDetailPage({ kind }) {
                 ))}
                 {!party.payments?.length && (
                   <tr>
-                    <td className="py-8 text-center text-[#7a6f73]" colSpan={3}>
+                    <td className="py-8 text-center text-[#6b6266]" colSpan={3}>
                       Sin pagos.
                     </td>
                   </tr>

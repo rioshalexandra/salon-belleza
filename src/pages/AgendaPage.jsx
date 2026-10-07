@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, MessageCircle, Plus } from 'lucide-react';
 import { api } from '../api';
+import { useAuth } from '../auth';
 import AppointmentForm, { emptyAppointment, toAppointmentForm } from '../components/AppointmentForm';
-import { APPOINTMENT_STATUSES, addDays, longDate, money, today, ymd } from '../format';
+import CheckoutModal from '../components/CheckoutModal';
+import { APPOINTMENT_STATUSES, addDays, longDate, money, today, whatsappLink, ymd } from '../format';
 import { useStore } from '../store';
 
 // Agenda de turnos: tira de 7 días arriba y el día elegido como línea de tiempo.
 export default function AgendaPage() {
-  const { currency } = useStore();
-  const navigate = useNavigate();
+  const { currency, settings } = useStore();
+  const { user, isAdmin } = useAuth();
   const [params, setParams] = useSearchParams();
   const day = /^\d{4}-\d{2}-\d{2}$/.test(params.get('dia') || '') ? params.get('dia') : today();
 
@@ -24,9 +26,12 @@ export default function AgendaPage() {
   const [rows, setRows] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
-  const [staffNames, setStaffNames] = useState([]);
-  const [staffFilter, setStaffFilter] = useState('');
+  const [staff, setStaff] = useState([]);
+  // Un empleado arranca viendo solo sus turnos; administración ve a todos
+  const [staffFilter, setStaffFilter] = useState(isAdmin ? '' : String(user?.id || ''));
   const [editing, setEditing] = useState(null);
+  const [charging, setCharging] = useState(null);
+  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
   async function load() {
@@ -34,13 +39,13 @@ export default function AgendaPage() {
     setRows(res.data);
   }
 
-  // Listas para el formulario (se cargan una sola vez)
+  // Listas para los formularios (se cargan una sola vez)
   useEffect(() => {
-    Promise.all([api.customers(), api.products('?type=service'), api.staffNames()])
+    Promise.all([api.customers(), api.products('?type=service'), api.staff()])
       .then(([c, s, st]) => {
         setCustomers(c.data);
         setServices(s.data);
-        setStaffNames(st.data);
+        setStaff(st.data);
       })
       .catch((err) => setError(err.message));
   }, []);
@@ -49,16 +54,16 @@ export default function AgendaPage() {
     load().catch((err) => setError(err.message));
   }, [weekStart]);
 
-  // Abrir el formulario directo si venimos de "Dar turno" en la ficha de un cliente
+  // Abrir el formulario directo si venimos de "Dar turno" (ficha del cliente o botón +)
   useEffect(() => {
     if (params.get('nuevo') === '1') {
-      setEditing(emptyAppointment(day, params.get('cliente') || ''));
+      setEditing(emptyAppointment(day, params.get('cliente') || '', isAdmin ? '' : user?.id));
       const next = new URLSearchParams(params);
       next.delete('nuevo');
       next.delete('cliente');
       setParams(next, { replace: true });
     }
-  }, []);
+  }, [params]);
 
   function goTo(nextDay) {
     const next = new URLSearchParams(params);
@@ -66,10 +71,8 @@ export default function AgendaPage() {
     setParams(next, { replace: true });
   }
 
-  const dayRows = rows
-    .filter((row) => ymd(row.day) === day)
-    .filter((row) => !staffFilter || row.staff_name === staffFilter);
-  const staffInWeek = [...new Set(rows.map((row) => row.staff_name).filter(Boolean))].sort();
+  const visible = rows.filter((row) => !staffFilter || String(row.staff_id) === staffFilter);
+  const dayRows = visible.filter((row) => ymd(row.day) === day);
 
   async function changeStatus(row, status) {
     try {
@@ -80,34 +83,28 @@ export default function AgendaPage() {
     }
   }
 
-  async function checkout(row) {
-    try {
-      const res = await api.checkoutAppointment(row.id);
-      navigate(`/ventas/${res.data.saleId}`);
-    } catch (err) {
-      setError(err.message);
-    }
+  function reminderText(row) {
+    return `Hola ${row.display_customer}! Te recordamos tu turno en ${settings?.name || 'el salón'} el ${longDate(
+      row.day
+    )} a las ${row.start_hhmm}${row.display_service ? ` (${row.display_service})` : ''}. ¡Te esperamos!`;
   }
 
   return (
-    <div className="h-full overflow-auto p-4 sm:p-6">
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="page">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-2xl">Agenda</h1>
-        {staffInWeek.length > 0 && (
-          <select
-            className="h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
-            value={staffFilter}
-            onChange={(e) => setStaffFilter(e.target.value)}
-          >
-            <option value="">Todas las profesionales</option>
-            {staffInWeek.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        )}
-        <button className="pill-btn primary inline-flex items-center gap-1" onClick={() => setEditing(emptyAppointment(day))}>
+        <select className="pill-select" value={staffFilter} onChange={(e) => setStaffFilter(e.target.value)}>
+          <option value="">Todos</option>
+          {staff.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+        <button
+          className="pill-btn primary hidden items-center gap-1 lg:inline-flex"
+          onClick={() => setEditing(emptyAppointment(day, '', isAdmin ? '' : user?.id))}
+        >
           <Plus size={16} /> Nuevo turno
         </button>
       </div>
@@ -125,14 +122,14 @@ export default function AgendaPage() {
         </button>
         <input
           type="date"
-          className="ml-2 h-9 rounded-full border border-[#e7dfe1] px-3 text-sm"
+          className="pill-select ml-auto"
           value={day}
           onChange={(e) => e.target.value && goTo(e.target.value)}
         />
       </div>
       <div className="week-strip mb-5">
         {weekDays.map((d) => {
-          const count = rows.filter((row) => ymd(row.day) === d && row.status !== 'cancelled').length;
+          const count = visible.filter((row) => ymd(row.day) === d && row.status !== 'cancelled').length;
           const [, , dd] = d.split('-');
           const label = longDate(d).split(' ')[0].slice(0, 3);
           return (
@@ -150,104 +147,130 @@ export default function AgendaPage() {
       </div>
 
       <h2 className="mb-3 text-lg font-medium first-letter:uppercase">{longDate(day)}</h2>
+      {notice && <div className="notice mb-3">{notice}</div>}
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
       {/* Línea de tiempo del día */}
       <ol className="agenda-thread">
-        {dayRows.map((row) => (
-          <li key={row.id} className={`agenda-item status-${row.status}`}>
-            <div className="agenda-time">
-              <div className="font-semibold">{row.start_hhmm}</div>
-              <div className="text-xs text-[#7a6f73]">{row.end_hhmm}</div>
-            </div>
-            <div className="agenda-card">
-              <div className="flex flex-wrap items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium">
-                    {row.customer_id ? (
-                      <Link className="text-[#8e3b5f]" to={`/clientes/${row.customer_id}`}>
-                        {row.display_customer}
-                      </Link>
-                    ) : (
-                      row.display_customer
-                    )}
-                  </div>
-                  <div className="text-sm text-[#655a5e]">
-                    {row.display_service || 'Servicio sin especificar'}
-                    {row.staff_name && ` · con ${row.staff_name}`}
-                    {row.price != null && ` · ${money(row.price, currency)}`}
-                  </div>
-                  {row.customer_phone && <div className="text-xs text-[#7a6f73]">{row.customer_phone}</div>}
-                  {row.notes && <div className="mt-1 text-sm text-[#655a5e]">{row.notes}</div>}
-                </div>
-                <span className={`badge appt-${row.status}`}>{APPOINTMENT_STATUSES[row.status]}</span>
+        {dayRows.map((row) => {
+          const wa = whatsappLink(row.customer_phone, reminderText(row));
+          return (
+            <li key={row.id} className={`agenda-item status-${row.status}`}>
+              <div className="agenda-time">
+                <div className="font-semibold">{row.start_hhmm}</div>
+                <div className="text-xs text-[#6b6266]">{row.end_hhmm}</div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {row.sale_id ? (
-                  <Link className="pill-btn inline-flex items-center no-underline" to={`/ventas/${row.sale_id}`}>
-                    Ver venta {row.sale_number}
-                  </Link>
-                ) : (
-                  row.status !== 'cancelled' && (
-                    <button className="pill-btn primary" onClick={() => checkout(row)}>
-                      Cobrar
-                    </button>
-                  )
-                )}
-                {row.status === 'scheduled' && (
-                  <>
-                    <button className="pill-btn" onClick={() => changeStatus(row, 'done')}>
-                      Realizado
-                    </button>
+              <div className="agenda-card" style={{ borderLeftColor: row.staff_color || undefined }}>
+                <div className="flex flex-wrap items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium">
+                      {row.customer_id ? (
+                        <Link className="text-link" to={`/clientes/${row.customer_id}`}>
+                          {row.display_customer}
+                        </Link>
+                      ) : (
+                        row.display_customer
+                      )}
+                    </div>
+                    <div className="text-sm text-[#5a5155]">
+                      {row.display_service || 'Servicio sin especificar'}
+                      {row.price != null && ` · ${money(row.price, currency)}`}
+                    </div>
+                    {row.display_staff && (
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-[#5a5155]">
+                        <span className="dot" style={{ background: row.staff_color || '#b08a3e' }} />
+                        {row.display_staff}
+                      </div>
+                    )}
+                    {row.notes && <div className="mt-1 text-sm text-[#5a5155]">{row.notes}</div>}
+                  </div>
+                  <span className={`badge appt-${row.status}`}>{APPOINTMENT_STATUSES[row.status]}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {row.sale_id ? (
+                    <Link className="pill-btn inline-flex items-center no-underline" to={`/ventas/${row.sale_id}`}>
+                      Cobrado · {row.sale_number}
+                    </Link>
+                  ) : (
+                    row.status !== 'cancelled' && (
+                      <button className="pill-btn primary" onClick={() => setCharging(row)}>
+                        Cobrar
+                      </button>
+                    )
+                  )}
+                  {row.status === 'scheduled' && (
                     <button className="pill-btn" onClick={() => changeStatus(row, 'no_show')}>
                       No vino
                     </button>
-                  </>
-                )}
-                {row.status !== 'scheduled' && !row.sale_id && (
-                  <button className="pill-btn" onClick={() => changeStatus(row, 'scheduled')}>
-                    Volver a pendiente
+                  )}
+                  {row.status !== 'scheduled' && !row.sale_id && (
+                    <button className="pill-btn" onClick={() => changeStatus(row, 'scheduled')}>
+                      Pendiente
+                    </button>
+                  )}
+                  {wa && row.status === 'scheduled' && (
+                    <a className="pill-btn inline-flex items-center gap-1 no-underline" href={wa} target="_blank" rel="noreferrer">
+                      <MessageCircle size={15} /> Recordar
+                    </a>
+                  )}
+                  <button className="pill-btn" onClick={() => setEditing(toAppointmentForm(row))}>
+                    Editar
                   </button>
-                )}
-                <button className="pill-btn" onClick={() => setEditing(toAppointmentForm(row))}>
-                  Editar
-                </button>
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
         {!dayRows.length && (
           <li className="agenda-empty">
             No hay turnos para este día.{' '}
-            <button className="text-[#8e3b5f]" onClick={() => setEditing(emptyAppointment(day))}>
+            <button className="link-btn" onClick={() => setEditing(emptyAppointment(day, '', isAdmin ? '' : user?.id))}>
               Dar un turno
             </button>
           </li>
         )}
       </ol>
 
+      {/* Botón flotante para dar turno desde el celular */}
+      <button
+        className="fab lg:hidden"
+        onClick={() => setEditing(emptyAppointment(day, '', isAdmin ? '' : user?.id))}
+        aria-label="Nuevo turno"
+      >
+        <Plus size={26} />
+      </button>
+
       {editing && (
         <AppointmentForm
           form={editing}
           customers={customers}
           services={services}
-          staffNames={staffNames}
+          staff={staff}
           onClose={() => setEditing(null)}
           onSave={async (body) => {
             const res = await api.saveAppointment(editing.id, body);
             setEditing(null);
-            // Si el turno se dio para otro día, la agenda salta a ese día
             await load();
             const savedDay = ymd(res.data.day);
             if (savedDay !== day) goTo(savedDay);
-            if (body.staffName && !staffNames.includes(body.staffName)) {
-              setStaffNames((prev) => [...prev, body.staffName].sort());
-            }
           }}
           onDelete={async () => {
             if (!confirm('¿Borrar este turno?')) return;
             await api.deleteAppointment(editing.id);
             setEditing(null);
+            await load();
+          }}
+        />
+      )}
+
+      {charging && (
+        <CheckoutModal
+          appointment={charging}
+          onClose={() => setCharging(null)}
+          onDone={async (sale) => {
+            setCharging(null);
+            setNotice(`Cobrado ${money(sale.total, currency)} · ${sale.number}`);
+            setTimeout(() => setNotice(''), 4000);
             await load();
           }}
         />

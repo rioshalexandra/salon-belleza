@@ -276,3 +276,36 @@ CREATE INDEX IF NOT EXISTS appointments_customer_idx ON appointments (customer_i
 
 -- Nombre por defecto pensado para el salón
 ALTER TABLE store_settings ALTER COLUMN name SET DEFAULT 'Mi salón'
+;
+
+-- ============================================================
+-- Empleados, comisiones y rubros
+-- ============================================================
+
+-- Cada usuario es un empleado. role: 'admin' ve y maneja todo; 'staff' ve su agenda,
+-- clientes, cobra y consulta sus comisiones.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'admin';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_pct NUMERIC(5,2) NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS color TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role;
+ALTER TABLE users ADD CONSTRAINT users_role CHECK (role IN ('admin', 'staff'));
+
+-- Quién atiende cada turno y quién hizo cada venta
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES users(id) ON DELETE SET NULL;
+-- El % se guarda en cada venta: si después cambia el % del empleado, lo ya cobrado no se modifica
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS commission_pct NUMERIC(5,2) NOT NULL DEFAULT 0;
+ALTER TABLE customer_visits ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES users(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS appointments_staff_idx ON appointments (staff_id, day);
+CREATE INDEX IF NOT EXISTS sales_staff_idx ON sales (staff_id, issued_at);
+
+-- Rubros que trabaja el negocio (peluquería, estética, uñas, depilación, kinesiología, masajes)
+ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS business_types TEXT[] NOT NULL DEFAULT ARRAY['peluqueria']::TEXT[];
+
+-- Campos de la ficha según rubro
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS nail_notes TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS waxing_notes TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS health_notes TEXT
