@@ -107,11 +107,52 @@ export const QUICK_METHODS = [
   ['other', 'Otro'],
 ];
 
-// Link de WhatsApp con mensaje armado. Asume Argentina si el número no trae código de país.
-export function whatsappLink(phone, text = '') {
+// Pasa un teléfono argentino al formato que entiende WhatsApp (549 + área + número).
+// Acepta cómo se suele cargar a mano: "011 15 1234-5678", "11 1234 5678",
+// "+54 9 11 1234 5678", "0351 15 123-4567", etc. Devuelve null si no hay número.
+export function normalizePhoneAR(phone) {
   let digits = String(phone || '').replace(/\D/g, '');
   if (!digits) return null;
+
+  // Sacamos el código de país (con o sin el 9 de celular) para trabajar con el número nacional
+  if (digits.startsWith('54')) {
+    digits = digits.slice(2);
+    if (digits.startsWith('9')) digits = digits.slice(1);
+  }
+  // Sacamos el 0 del código de área
   if (digits.startsWith('0')) digits = digits.slice(1);
-  if (!digits.startsWith('54')) digits = `549${digits}`;
+
+  // Un número nacional tiene 10 dígitos. Si tiene 12, viene con el "15" de celular
+  // metido después del código de área (que puede ser de 2, 3 o 4 dígitos): lo sacamos.
+  if (digits.length === 12) {
+    if (digits.startsWith('11') && digits.slice(2, 4) === '15') {
+      digits = digits.slice(0, 2) + digits.slice(4); // Buenos Aires (área 11)
+    } else if (digits.slice(3, 5) === '15') {
+      digits = digits.slice(0, 3) + digits.slice(5); // área de 3 dígitos (ej. 351, 221)
+    } else if (digits.slice(4, 6) === '15') {
+      digits = digits.slice(0, 4) + digits.slice(6); // área de 4 dígitos (ej. 2223)
+    }
+  }
+
+  return `549${digits}`;
+}
+
+// Link de WhatsApp con mensaje armado. Asume Argentina.
+export function whatsappLink(phone, text = '') {
+  const digits = normalizePhoneAR(phone);
+  if (!digits) return null;
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
+// "hoy", "mañana" o "el viernes 9 de octubre", según la fecha del turno
+export function relativeDay(ymdValue) {
+  const day = String(ymdValue).slice(0, 10);
+  if (day === today()) return 'hoy';
+  if (day === addDays(today(), 1)) return 'mañana';
+  return `el ${longDate(day)}`;
+}
+
+// Primer nombre para saludar: "Sofía Pérez" → "Sofía"
+export function firstName(name) {
+  return String(name || '').trim().split(/\s+/)[0] || '';
 }

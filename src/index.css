@@ -126,6 +126,9 @@ main > .h-full.overflow-auto { padding-bottom: 96px; }
 .pill-btn.primary:hover { background: #000; border-color: var(--gold); color: #fff; }
 .pill-btn.big { min-height: 48px; padding: 0 28px; font-size: 16px; }
 .pill-btn:disabled { opacity: 0.5; cursor: default; }
+/* Botón "apagado" que igual se puede tocar para mostrar un aviso (ej. falta el teléfono) */
+.pill-btn.muted { opacity: 0.5; }
+.pill-btn.muted:hover { background: var(--surface); border-color: var(--line); }
 .pill-btn.danger { color: #c5221f; border-color: #f6aea9; background: #fce8e6; }
 .pill-btn.danger:hover { background: #f9d3d0; }
 .pill-select {

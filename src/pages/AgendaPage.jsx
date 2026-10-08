@@ -5,7 +5,17 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import AppointmentForm, { emptyAppointment, toAppointmentForm } from '../components/AppointmentForm';
 import CheckoutModal from '../components/CheckoutModal';
-import { APPOINTMENT_STATUSES, addDays, longDate, money, today, whatsappLink, ymd } from '../format';
+import {
+  APPOINTMENT_STATUSES,
+  addDays,
+  firstName,
+  longDate,
+  money,
+  relativeDay,
+  today,
+  whatsappLink,
+  ymd,
+} from '../format';
 import { useStore } from '../store';
 
 // Agenda de turnos: tira de 7 días arriba y el día elegido como línea de tiempo.
@@ -83,11 +93,20 @@ export default function AgendaPage() {
     }
   }
 
+  // Mensaje de recordatorio: saluda por el primer nombre y dice "hoy" / "mañana" cuando corresponde.
+  // Ej.: "Hola Sofía! Te recordamos tu turno en Salón Rosa mañana a las 15:00 (Corte). ¡Te esperamos!"
   function reminderText(row) {
-    return `Hola ${row.display_customer}! Te recordamos tu turno en ${settings?.name || 'el salón'} el ${longDate(
-      row.day
-    )} a las ${row.start_hhmm}${row.display_service ? ` (${row.display_service})` : ''}. ¡Te esperamos!`;
+    const nombre = firstName(row.display_customer);
+    const saludo = nombre ? `Hola ${nombre}!` : 'Hola!';
+    const servicio = row.display_service ? ` (${row.display_service})` : '';
+    return `${saludo} Te recordamos tu turno en ${settings?.name || 'el salón'} ${relativeDay(row.day)} a las ${
+      row.start_hhmm
+    }${servicio}. ¡Te esperamos!`;
   }
+
+  // Si la clienta no tiene teléfono, el botón "Recordar" queda en gris y al tocarlo
+  // muestra, dentro de la tarjeta de ese turno, el aviso de que falta cargarlo.
+  const [sinTelefono, setSinTelefono] = useState(null); // id del turno que muestra el aviso
 
   return (
     <div className="page">
@@ -208,15 +227,43 @@ export default function AgendaPage() {
                       Pendiente
                     </button>
                   )}
-                  {wa && row.status === 'scheduled' && (
-                    <a className="pill-btn inline-flex items-center gap-1 no-underline" href={wa} target="_blank" rel="noreferrer">
-                      <MessageCircle size={15} /> Recordar
-                    </a>
-                  )}
+                  {/* Recordatorio por WhatsApp: abre el chat con el mensaje ya escrito, solo falta tocar enviar */}
+                  {row.status === 'scheduled' &&
+                    (wa ? (
+                      <a className="pill-btn inline-flex items-center gap-1 no-underline" href={wa} target="_blank" rel="noreferrer">
+                        <MessageCircle size={15} /> Recordar
+                      </a>
+                    ) : (
+                      <button
+                        className="pill-btn muted inline-flex items-center gap-1"
+                        title="Falta el teléfono de la clienta"
+                        onClick={() => setSinTelefono(sinTelefono === row.id ? null : row.id)}
+                      >
+                        <MessageCircle size={15} /> Recordar
+                      </button>
+                    ))}
                   <button className="pill-btn" onClick={() => setEditing(toAppointmentForm(row))}>
                     Editar
                   </button>
                 </div>
+                {/* Aviso cuando se toca "Recordar" y la clienta no tiene teléfono cargado */}
+                {!wa && sinTelefono === row.id && (
+                  <div className="mt-2 text-sm text-[#5a5155]">
+                    Para recordarle el turno, cargá el teléfono de {firstName(row.display_customer) || 'la clienta'}
+                    {row.customer_id ? (
+                      <>
+                        {' '}
+                        en su{' '}
+                        <Link className="text-link" to={`/clientes/${row.customer_id}`}>
+                          ficha
+                        </Link>
+                        .
+                      </>
+                    ) : (
+                      '. Este turno no tiene una clienta registrada: elegila desde Editar.'
+                    )}
+                  </div>
+                )}
               </div>
             </li>
           );
