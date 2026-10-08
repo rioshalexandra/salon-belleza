@@ -92,10 +92,10 @@ export const APPOINTMENT_STATUSES = {
 // Rubros que puede trabajar el negocio
 export const BUSINESS_TYPES = {
   peluqueria: 'Peluquería',
+  barberia: 'Barbería',
   estetica: 'Estética',
   unas: 'Uñas',
   depilacion: 'Depilación',
-  kinesiologia: 'Kinesiología',
   masajes: 'Masajes',
 };
 

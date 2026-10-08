@@ -13,7 +13,7 @@ El staff entra con usuario y contraseña. Con `SEED_DEMO=true` y la base vacía,
 | **Inicio** | Una tarjeta por empleado (turnos de hoy, facturado del día y del mes, comisión), caja del día por medio de pago, cumpleaños con saludo por WhatsApp y productos para reponer |
 | **Agenda** | Turnos por día y semana, filtro por empleado, aviso de superposición, recordatorio por WhatsApp y botón **Cobrar** |
 | **Cobrar** | Cobro en un solo paso: servicios y productos, quién atendió y medio de pago. Confirma la venta, descuenta stock y registra el pago |
-| **Clientes** | Ficha según los rubros del negocio (peluquería, estética, uñas, depilación, kinesiología, masajes), alergias, historial de visitas y turnos |
+| **Clientes** | Ficha según los rubros del negocio (peluquería, barbería, estética, uñas, depilación, masajes), alergias, historial de visitas y turnos |
 | **Empleados** | Cada uno con usuario, color y % de comisión. Rol *Empleado* (su agenda, clientes, cobros y comisión) o *Administración* (todo) |
 | **Servicios y productos** | Catálogo con duración; servicios sugeridos por rubro con un botón; productos de reventa con stock |
 | **Administración** | Proveedores, compras, movimientos de stock, precios, pagos, CSV / Excel y configuración (solo administración) |

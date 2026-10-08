@@ -6,7 +6,7 @@ export const CUSTOMER_FIELDS = [
     column: 'hair_type',
     label: 'Tipo de cabello',
     placeholder: 'Ej: rizado, fino, poroso, con canas',
-    rubros: ['peluqueria'],
+    rubros: ['peluqueria', 'barberia'],
   },
   {
     key: 'colorFormula',
@@ -38,13 +38,18 @@ export const CUSTOMER_FIELDS = [
     rubros: ['unas'],
   },
   {
-    key: 'healthNotes',
-    column: 'health_notes',
-    label: 'Motivo de consulta / lesiones / indicaciones',
-    placeholder: 'Ej: contractura cervical, derivada por traumatólogo',
-    rubros: ['kinesiologia', 'masajes'],
-    wide: true,
-    textarea: true,
+    key: 'beardNotes',
+    column: 'beard_notes',
+    label: 'Barba: estilo y largo',
+    placeholder: 'Ej: barba corta degradada, perfilado marcado',
+    rubros: ['barberia'],
+  },
+  {
+    key: 'massageNotes',
+    column: 'massage_notes',
+    label: 'Masajes: presión y preferencias',
+    placeholder: 'Ej: presión media, sin aceites con aroma, música suave',
+    rubros: ['masajes'],
   },
 ];
 

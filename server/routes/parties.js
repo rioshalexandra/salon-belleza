@@ -14,7 +14,8 @@ const CUSTOMER_EXTRA = {
   preferences: 'preferences',
   nailNotes: 'nail_notes', // uñas
   waxingNotes: 'waxing_notes', // depilación
-  healthNotes: 'health_notes', // kinesiología / masajes
+  beardNotes: 'beard_notes', // barbería
+  massageNotes: 'massage_notes', // masajes (preferencias, no datos de salud)
 };
 
 export function partyRouter(table) {

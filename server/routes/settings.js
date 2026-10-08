@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { query } from '../db/pool.js';
 
 // Rubros que puede trabajar el negocio
-export const BUSINESS_TYPES = ['peluqueria', 'estetica', 'unas', 'depilacion', 'kinesiologia', 'masajes'];
+export const BUSINESS_TYPES = ['peluqueria', 'barberia', 'estetica', 'unas', 'depilacion', 'masajes'];
 
 const router = Router();
 

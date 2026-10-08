@@ -12,6 +12,17 @@ export const SUGGESTED_SERVICES = {
       ['PEL-TRAT', 'Tratamiento capilar', 18000, 45],
     ],
   },
+  barberia: {
+    label: 'Barbería',
+    category: 'Barbería',
+    services: [
+      ['BAR-CORTE', 'Corte de pelo', 10000, 30],
+      ['BAR-BARBA', 'Arreglo de barba', 7000, 20],
+      ['BAR-COMBO', 'Corte + barba', 15000, 45],
+      ['BAR-NAVAJA', 'Afeitado con navaja', 9000, 30],
+      ['BAR-PERFILADO', 'Perfilado y diseño', 5000, 15],
+    ],
+  },
   estetica: {
     label: 'Estética',
     category: 'Estética',
@@ -40,15 +51,6 @@ export const SUGGESTED_SERVICES = {
       ['DEP-CAVADO', 'Depilación cavado', 9000, 25],
       ['DEP-AXILAS', 'Depilación axilas', 6000, 15],
       ['DEP-BOZO', 'Depilación bozo', 4000, 10],
-    ],
-  },
-  kinesiologia: {
-    label: 'Kinesiología',
-    category: 'Kinesiología',
-    services: [
-      ['KIN-SESION', 'Sesión de kinesiología', 15000, 45],
-      ['KIN-EVAL', 'Evaluación inicial', 18000, 60],
-      ['KIN-DRENAJE', 'Drenaje linfático', 20000, 60],
     ],
   },
   masajes: {

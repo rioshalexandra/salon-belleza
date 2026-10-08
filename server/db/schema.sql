@@ -302,13 +302,12 @@ ALTER TABLE customer_visits ADD COLUMN IF NOT EXISTS staff_id INT REFERENCES use
 CREATE INDEX IF NOT EXISTS appointments_staff_idx ON appointments (staff_id, day);
 CREATE INDEX IF NOT EXISTS sales_staff_idx ON sales (staff_id, issued_at);
 
--- Rubros que trabaja el negocio (peluquería, estética, uñas, depilación, kinesiología, masajes)
+-- Rubros que trabaja el negocio (peluquería, barbería, estética, uñas, depilación, masajes)
 ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS business_types TEXT[] NOT NULL DEFAULT ARRAY['peluqueria']::TEXT[];
 
 -- Campos de la ficha según rubro
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS nail_notes TEXT;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS waxing_notes TEXT;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS health_notes TEXT
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS waxing_notes TEXT
 ;
 
 -- ============================================================
@@ -316,4 +315,17 @@ ALTER TABLE customers ADD COLUMN IF NOT EXISTS health_notes TEXT
 -- cantidad sugerida para pedir y proveedor habitual de cada producto
 -- ============================================================
 ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_qty NUMERIC(14,3);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INT REFERENCES suppliers(id) ON DELETE SET NULL
+ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INT REFERENCES suppliers(id) ON DELETE SET NULL;
+
+-- ============================================================
+-- Rubros: se quita kinesiología (para no guardar datos de salud) y se suma barbería
+-- ============================================================
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS beard_notes TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS massage_notes TEXT;
+-- El campo de motivo de consulta / lesiones se elimina junto con lo que tuviera guardado
+ALTER TABLE customers DROP COLUMN IF EXISTS health_notes;
+UPDATE store_settings SET business_types = array_remove(business_types, 'kinesiologia');
+UPDATE store_settings SET business_types = ARRAY['peluqueria']::TEXT[] WHERE cardinality(business_types) = 0
+;
+-- Los servicios sugeridos de kinesiología que se hayan cargado quedan inactivos (no se borran por si tienen ventas)
+UPDATE products SET active = false WHERE sku LIKE 'KIN-%' AND is_service = true AND active = true
