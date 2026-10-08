@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import ConfirmDangerModal from '../components/ConfirmDangerModal';
 import PartyForm, { emptyParty, toPartyForm } from '../components/PartyForm';
-import { money, ymd } from '../format';
+import { money, planIncludes, ymd } from '../format';
 import { useStore } from '../store';
 import { useAuth } from '../auth';
 
@@ -31,7 +31,9 @@ const COPY = {
 export default function PartiesPage({ kind }) {
   const meta = COPY[kind];
   const { isAdmin } = useAuth();
-  const { currency } = useStore();
+  const { currency, settings } = useStore();
+  // La columna de próximo turno solo se muestra si el plan incluye la agenda
+  const conAgenda = planIncludes(settings?.plan, 'agenda');
   const [rows, setRows] = useState([]);
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
@@ -92,7 +94,7 @@ export default function PartiesPage({ kind }) {
                 <>
                   <th>Teléfono</th>
                   <th>Última visita</th>
-                  <th>Próximo turno</th>
+                  {conAgenda && <th>Próximo turno</th>}
                 </>
               ) : (
                 <>
@@ -116,7 +118,7 @@ export default function PartiesPage({ kind }) {
                   <>
                     <td>{row.phone || '—'}</td>
                     <td>{row.last_visit ? ymd(row.last_visit) : '—'}</td>
-                    <td>{row.next_appointment ? ymd(row.next_appointment) : '—'}</td>
+                    {conAgenda && <td>{row.next_appointment ? ymd(row.next_appointment) : '—'}</td>}
                   </>
                 ) : (
                   <>

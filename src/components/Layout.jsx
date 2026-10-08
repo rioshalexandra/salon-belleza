@@ -22,34 +22,38 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../auth';
+import { planIncludes } from '../format';
 import { useStore } from '../store';
 import PoweredBy from './PoweredBy';
 
 // Menú completo. adminOnly: solo lo ve administración.
 // main: aparece arriba; el resto queda agrupado en "Administración".
+// feature: parte del plan a la que pertenece ('agenda' u 'stock'); si el plan no la incluye, no se muestra.
 export const NAV = [
   { to: '/', label: 'Inicio', icon: Home, end: true, main: true },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays, main: true },
+  { to: '/agenda', label: 'Agenda', icon: CalendarDays, main: true, feature: 'agenda' },
   { to: '/cobrar', label: 'Cobrar', icon: Wallet, main: true },
   { to: '/clientes', label: 'Clientes', icon: Users, main: true },
   { to: '/ventas', label: 'Ventas', icon: Receipt, main: true },
   { to: '/servicios', label: 'Servicios', icon: Scissors, adminOnly: true },
-  { to: '/productos', label: 'Productos', icon: Boxes, adminOnly: true },
-  { to: '/pedido', label: 'Pedido', icon: ClipboardList, adminOnly: true },
+  { to: '/productos', label: 'Productos', icon: Boxes, adminOnly: true, feature: 'stock' },
+  { to: '/pedido', label: 'Pedido', icon: ClipboardList, adminOnly: true, feature: 'stock' },
   { to: '/empleados', label: 'Empleados', icon: UserCog, adminOnly: true },
-  { to: '/proveedores', label: 'Proveedores', icon: Truck, adminOnly: true },
-  { to: '/compras', label: 'Compras', icon: PackagePlus, adminOnly: true },
-  { to: '/movimientos', label: 'Movimientos de stock', icon: History, adminOnly: true },
+  { to: '/proveedores', label: 'Proveedores', icon: Truck, adminOnly: true, feature: 'stock' },
+  { to: '/compras', label: 'Compras', icon: PackagePlus, adminOnly: true, feature: 'stock' },
+  { to: '/movimientos', label: 'Movimientos de stock', icon: History, adminOnly: true, feature: 'stock' },
   { to: '/pagos', label: 'Pagos', icon: Wallet, adminOnly: true },
   { to: '/precios', label: 'Precios', icon: Percent, adminOnly: true },
   { to: '/importar', label: 'CSV / Excel', icon: FileSpreadsheet, adminOnly: true },
   { to: '/configuracion', label: 'Configuración', icon: Settings, adminOnly: true },
 ];
 
-// Barra inferior del celular: lo de todos los días al alcance del pulgar
+// Barra inferior del celular: lo de todos los días al alcance del pulgar.
+// Sin agenda (plan de stock), el segundo lugar lo ocupa Productos.
 const BOTTOM = [
   { to: '/', label: 'Inicio', icon: Home, end: true },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/agenda', label: 'Agenda', icon: CalendarDays, feature: 'agenda' },
+  { to: '/productos', label: 'Productos', icon: Boxes, feature: 'stock', onlyWithout: 'agenda' },
   { to: '/cobrar', label: 'Cobrar', icon: Wallet, accent: true },
   { to: '/clientes', label: 'Clientes', icon: Users },
 ];
@@ -58,7 +62,16 @@ export default function Layout() {
   const { user, logout, isAdmin } = useAuth();
   const { settings } = useStore();
   const [open, setOpen] = useState(false);
-  const items = NAV.filter((item) => isAdmin || !item.adminOnly);
+  const plan = settings?.plan;
+  // Se ve lo que permite el rol (administración / empleado) y lo que incluye el plan
+  const items = NAV.filter((item) => (isAdmin || !item.adminOnly) && planIncludes(plan, item.feature));
+  const bottom = BOTTOM.filter(
+    (item) =>
+      planIncludes(plan, item.feature) &&
+      !(item.onlyWithout && planIncludes(plan, item.onlyWithout)) &&
+      // Productos es de administración: un empleado no lo ve en la barra
+      (isAdmin || item.to !== '/productos')
+  );
 
   return (
     <div className="app-shell">
@@ -107,7 +120,7 @@ export default function Layout() {
 
       {/* Barra inferior (solo celular) */}
       <nav className="bottom-nav lg:hidden" aria-label="Accesos rápidos">
-        {BOTTOM.map((item) => (
+        {bottom.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

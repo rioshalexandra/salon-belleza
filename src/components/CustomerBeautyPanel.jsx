@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarPlus, MessageCircle, Trash2 } from 'lucide-react';
 import { api } from '../api';
-import { APPOINTMENT_STATUSES, birthdayLabel, today, whatsappLink, ymd } from '../format';
+import { APPOINTMENT_STATUSES, birthdayLabel, planIncludes, today, whatsappLink, ymd } from '../format';
 import { fieldsForRubros } from '../rubros';
 import { useStore } from '../store';
 
@@ -42,7 +42,8 @@ export default function CustomerBeautyPanel({ party, onChanged }) {
             </div>
           ))}
         </dl>
-        <AppointmentsList party={party} />
+        {/* Turnos de la clienta: solo si el plan incluye la agenda */}
+        {planIncludes(settings?.plan, 'agenda') && <AppointmentsList party={party} />}
       </section>
       <VisitsSection party={party} onChanged={onChanged} />
     </div>

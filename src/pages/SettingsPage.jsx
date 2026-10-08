@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { BUSINESS_TYPES } from '../format';
+import { BUSINESS_TYPES, PLANS } from '../format';
 import { useStore } from '../store';
 
-// Configuración del negocio: nombre, rubros, moneda e impuesto.
+// Configuración del negocio: nombre, plan, rubros, moneda e impuesto.
 export default function SettingsPage() {
   const { settings, reload } = useStore();
   const [form, setForm] = useState(null);
@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const current = form || settings;
   if (!current) return <div className="page">Cargando…</div>;
   const types = current.business_types || [];
+  const plan = PLANS[current.plan] ? current.plan : 'completo';
 
   function toggleType(type) {
     const next = types.includes(type) ? types.filter((t) => t !== type) : [...types, type];
@@ -39,6 +40,7 @@ export default function SettingsPage() {
               currency: current.currency,
               taxRate: Number(current.tax_rate || 0),
               businessTypes: types,
+              plan,
             });
             await reload();
             setForm(null);
@@ -54,6 +56,30 @@ export default function SettingsPage() {
           <span>Nombre del negocio</span>
           <input value={current.name} onChange={(e) => setForm({ ...current, name: e.target.value })} />
         </label>
+
+        {/* Plan: define qué secciones se ven. Cambiarlo nunca borra datos. */}
+        <fieldset className="field m-0 border-0 p-0">
+          <span>Plan</span>
+          <div className="grid gap-2">
+            {Object.entries(PLANS).map(([value, info]) => (
+              <label key={value} className={`check-tile ${plan === value ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="plan"
+                  checked={plan === value}
+                  onChange={() => setForm({ ...current, plan: value })}
+                />
+                <span>
+                  <span className="block font-medium">{info.label}</span>
+                  <span className="block text-xs text-[#6b6266]">{info.hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <small className="text-xs text-[#6b6266]">
+            Cambiar de plan solo muestra u oculta secciones: no se borra nada de lo que ya está cargado.
+          </small>
+        </fieldset>
 
         {/* Rubros: definen qué campos tiene la ficha del cliente y los servicios sugeridos */}
         <fieldset className="field m-0 border-0 p-0">

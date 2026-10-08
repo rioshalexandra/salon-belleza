@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
-import { StoreProvider } from './store';
+import { StoreProvider, useStore } from './store';
+import { planIncludes } from './format';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -35,26 +36,26 @@ export default function App() {
         }
       >
         <Route index element={<DashboardPage />} />
-        <Route path="agenda" element={<AgendaPage />} />
+        <Route path="agenda" element={<PlanOnly feature="agenda"><AgendaPage /></PlanOnly>} />
         <Route path="cobrar" element={<CobrarPage />} />
-        <Route path="pedido" element={<AdminOnly><PedidoPage /></AdminOnly>} />
+        <Route path="pedido" element={<PlanOnly feature="stock"><AdminOnly><PedidoPage /></AdminOnly></PlanOnly>} />
         <Route path="empleados" element={<AdminOnly><StaffPage /></AdminOnly>} />
         {/* key distinta para que no se mezcle el estado entre servicios y productos */}
         <Route path="servicios" element={<AdminOnly><ProductsPage key="services" kind="services" /></AdminOnly>} />
         <Route path="servicios/:id" element={<AdminOnly><ProductDetailPage /></AdminOnly>} />
-        <Route path="productos" element={<AdminOnly><ProductsPage key="products" kind="products" /></AdminOnly>} />
-        <Route path="productos/:id" element={<AdminOnly><ProductDetailPage /></AdminOnly>} />
-        <Route path="movimientos" element={<AdminOnly><MovementsPage /></AdminOnly>} />
+        <Route path="productos" element={<PlanOnly feature="stock"><AdminOnly><ProductsPage key="products" kind="products" /></AdminOnly></PlanOnly>} />
+        <Route path="productos/:id" element={<PlanOnly feature="stock"><AdminOnly><ProductDetailPage /></AdminOnly></PlanOnly>} />
+        <Route path="movimientos" element={<PlanOnly feature="stock"><AdminOnly><MovementsPage /></AdminOnly></PlanOnly>} />
         <Route path="clientes" element={<PartiesPage key="customers" kind="customers" />} />
         <Route path="clientes/:id" element={<PartyDetailPage key="customers" kind="customers" />} />
-        <Route path="proveedores" element={<AdminOnly><PartiesPage key="suppliers" kind="suppliers" /></AdminOnly>} />
-        <Route path="proveedores/:id" element={<AdminOnly><PartyDetailPage key="suppliers" kind="suppliers" /></AdminOnly>} />
+        <Route path="proveedores" element={<PlanOnly feature="stock"><AdminOnly><PartiesPage key="suppliers" kind="suppliers" /></AdminOnly></PlanOnly>} />
+        <Route path="proveedores/:id" element={<PlanOnly feature="stock"><AdminOnly><PartyDetailPage key="suppliers" kind="suppliers" /></AdminOnly></PlanOnly>} />
         <Route path="ventas" element={<DocumentsPage kind="sales" />} />
         <Route path="ventas/nueva" element={<DocumentEditorPage kind="sales" />} />
         <Route path="ventas/:id" element={<DocumentEditorPage kind="sales" />} />
-        <Route path="compras" element={<AdminOnly><DocumentsPage kind="purchases" /></AdminOnly>} />
-        <Route path="compras/nueva" element={<AdminOnly><DocumentEditorPage kind="purchases" /></AdminOnly>} />
-        <Route path="compras/:id" element={<AdminOnly><DocumentEditorPage kind="purchases" /></AdminOnly>} />
+        <Route path="compras" element={<PlanOnly feature="stock"><AdminOnly><DocumentsPage kind="purchases" /></AdminOnly></PlanOnly>} />
+        <Route path="compras/nueva" element={<PlanOnly feature="stock"><AdminOnly><DocumentEditorPage kind="purchases" /></AdminOnly></PlanOnly>} />
+        <Route path="compras/:id" element={<PlanOnly feature="stock"><AdminOnly><DocumentEditorPage kind="purchases" /></AdminOnly></PlanOnly>} />
         <Route path="pagos" element={<AdminOnly><PaymentsPage /></AdminOnly>} />
         <Route path="precios" element={<AdminOnly><PricesPage /></AdminOnly>} />
         <Route path="importar" element={<AdminOnly><ImportExportPage /></AdminOnly>} />
@@ -77,5 +78,12 @@ function RequireAuth({ children }) {
 function AdminOnly({ children }) {
   const { isAdmin } = useAuth();
   if (!isAdmin) return <Navigate to="/" replace />;
+  return children;
+}
+
+// Secciones que dependen del plan: si el plan del negocio no las incluye, se vuelve al inicio
+function PlanOnly({ feature, children }) {
+  const { settings } = useStore();
+  if (settings && !planIncludes(settings.plan, feature)) return <Navigate to="/" replace />;
   return children;
 }

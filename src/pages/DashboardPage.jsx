@@ -3,7 +3,17 @@ import { Link } from 'react-router-dom';
 import { Cake, CalendarDays, MessageCircle, PackageOpen, Wallet } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { APPOINTMENT_STATUSES, METHODS, birthdayLabel, longDate, money, qty, today, whatsappLink } from '../format';
+import {
+  APPOINTMENT_STATUSES,
+  METHODS,
+  birthdayLabel,
+  longDate,
+  money,
+  planIncludes,
+  qty,
+  today,
+  whatsappLink,
+} from '../format';
 import { useStore } from '../store';
 import { initials } from './StaffPage';
 
@@ -53,8 +63,11 @@ export default function DashboardPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{s.name}</div>
+                      {/* El resumen de turnos solo tiene sentido si el plan incluye la agenda */}
                       <div className="text-xs text-[#6b6266]">
-                        {s.today_total
+                        {!planIncludes(settings?.plan, 'agenda')
+                          ? 'Resumen de cobros'
+                          : s.today_total
                           ? `${s.today_done} de ${s.today_total} turnos hoy${s.next_time ? ` · próximo ${s.next_time}` : ''}`
                           : 'Sin turnos hoy'}
                       </div>
@@ -78,7 +91,8 @@ export default function DashboardPage() {
           </section>
 
           <div className="mb-6 grid gap-6 xl:grid-cols-[3fr_2fr]">
-            {/* Turnos de hoy */}
+            {/* Turnos de hoy (solo si el plan incluye la agenda) */}
+            {planIncludes(settings?.plan, 'agenda') && (
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="section-title m-0 flex items-center gap-2">
@@ -114,6 +128,7 @@ export default function DashboardPage() {
                 )}
               </ol>
             </section>
+            )}
 
             <div className="grid content-start gap-6">
               {/* Caja del día por medio de pago */}
@@ -166,7 +181,7 @@ export default function DashboardPage() {
               </section>
 
               {/* Productos de reventa por debajo del mínimo */}
-              {data.isAdmin && (
+              {data.isAdmin && planIncludes(settings?.plan, 'stock') && (
                 <section>
                   <h2 className="section-title flex items-center gap-2">
                     <PackageOpen size={18} /> Para reponer

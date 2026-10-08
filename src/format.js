@@ -99,6 +99,36 @@ export const BUSINESS_TYPES = {
   masajes: 'Masajes',
 };
 
+// Planes que puede contratar el negocio. Cada plan muestra u oculta secciones de la app,
+// pero nunca borra datos: si después suma la otra opción, aparece todo lo que ya cargó.
+export const PLANS = {
+  turnos: {
+    label: 'Opción A · Agenda con recordatorio',
+    hint: 'Agenda de turnos con recordatorio por WhatsApp, clientas, servicios, empleados y cobro.',
+  },
+  stock: {
+    label: 'Opción C · Ficha de clienta y stock',
+    hint: 'Ficha de clientas, productos con stock crítico, pedido a proveedores, compras y cobro.',
+  },
+  completo: {
+    label: 'Completo · A + C',
+    hint: 'Todo junto: agenda con recordatorio, ficha de clientas y control de stock.',
+  },
+};
+
+// Qué parte de la app incluye cada plan:
+//   'agenda' → agenda de turnos y recordatorios (opción A)
+//   'stock'  → productos, pedido, proveedores, compras y movimientos (opción C)
+// Lo demás (inicio, clientas, cobrar, ventas, servicios, empleados...) está en todos los planes.
+export function planIncludes(plan, feature) {
+  if (!feature) return true;
+  const actual = PLANS[plan] ? plan : 'completo'; // por las dudas, si no hay plan se ve todo
+  if (actual === 'completo') return true;
+  if (feature === 'agenda') return actual === 'turnos';
+  if (feature === 'stock') return actual === 'stock';
+  return true;
+}
+
 // Medios de pago que se ofrecen al cobrar (los más usados primero)
 export const QUICK_METHODS = [
   ['cash', 'Efectivo'],

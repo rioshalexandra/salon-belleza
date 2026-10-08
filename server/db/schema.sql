@@ -329,3 +329,15 @@ UPDATE store_settings SET business_types = ARRAY['peluqueria']::TEXT[] WHERE car
 ;
 -- Los servicios sugeridos de kinesiología que se hayan cargado quedan inactivos (no se borran por si tienen ventas)
 UPDATE products SET active = false WHERE sku LIKE 'KIN-%' AND is_service = true AND active = true
+;
+
+-- ============================================================
+-- Plan contratado: define qué secciones se ven en la app.
+--   'turnos'   = Opción A: agenda con recordatorio por WhatsApp
+--   'stock'    = Opción C: ficha de clienta y control de stock
+--   'completo' = A + C (todo)
+-- Cambiar de plan solo muestra u oculta secciones: nunca borra datos.
+-- ============================================================
+ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'completo';
+ALTER TABLE store_settings DROP CONSTRAINT IF EXISTS store_settings_plan;
+ALTER TABLE store_settings ADD CONSTRAINT store_settings_plan CHECK (plan IN ('turnos', 'stock', 'completo'))
